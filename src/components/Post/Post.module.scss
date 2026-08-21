@@ -1,0 +1,25 @@
+@import '../../../src/styles/settings.scss';
+
+.root {
+  margin: 0 auto;
+  max-width: 300px;
+  padding-top: 20px;
+  .media {
+    background-color: orange;
+  }
+  .radios {
+    display: flex;
+    flex-direction: row-reverse;
+  }
+  .content {
+    margin: auto 0;
+    width: 200px;
+    padding-right: 10px;
+    word-break: break-all;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .id {
+    text-align: center;
+  }
+}

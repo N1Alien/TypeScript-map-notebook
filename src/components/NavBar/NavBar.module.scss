@@ -1,0 +1,9 @@
+@import '../../../src/styles/settings.scss';
+
+.root {
+  .bar {
+    background-color: black;
+    display: flex;
+    justify-content: center;
+  }
+}

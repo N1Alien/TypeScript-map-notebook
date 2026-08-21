@@ -1,0 +1,99 @@
+{
+  "posts": [
+    {
+      "id": 180,
+      "content": "Task 180",
+      "coord": {
+        "lat": 43.229195113965005,
+        "lng": 72.81738281250001
+      },
+      "distance": "4013",
+      "savedIntel": {
+        "id": 577,
+        "flag": "https://flagcdn.com/w320/kz.png",
+        "subregion": "Asia (Asia)",
+        "name": "Kazakhstan",
+        "capital": "Zhambyl oblysy",
+        "nativeName": "Kazakhstan",
+        "currencies": [
+          {
+            "name": "Local Currency"
+          }
+        ],
+        "languages": [
+          {
+            "name": "Official Language"
+          }
+        ],
+        "latlng": [
+          43.229195113965005,
+          72.81738281250001
+        ]
+      }
+    },
+    {
+      "id": 773,
+      "content": "wewew",
+      "coord": {
+        "lat": 39.027718840211605,
+        "lng": 36.33952675246355
+      },
+      "distance": "1782",
+      "savedIntel": {
+        "id": 963,
+        "flag": "https://flagcdn.com/w320/tr.png",
+        "subregion": "Asia (Asia)",
+        "name": "Turkiye",
+        "capital": "Kayseri",
+        "nativeName": "Turkiye",
+        "currencies": [
+          {
+            "name": "Turkish Lira (TRY)"
+          }
+        ],
+        "languages": [
+          {
+            "name": "Official Language"
+          }
+        ],
+        "latlng": [
+          39.027718840211605,
+          36.33952675246355
+        ]
+      }
+    },
+    {
+      "id": 311,
+      "content": "o",
+      "coord": {
+        "lat": 53.4357192066942,
+        "lng": 28.346742526840664
+      },
+      "distance": "678",
+      "savedIntel": {
+        "id": 871,
+        "flag": "https://flagcdn.com/w320/by.png",
+        "subregion": "Europe (Europe)",
+        "name": "Belarus",
+        "capital": "Minskaja voblasc",
+        "nativeName": "Belarus",
+        "currencies": [
+          {
+            "name": "Local Currency"
+          }
+        ],
+        "languages": [
+          {
+            "name": "Official Language"
+          }
+        ],
+        "latlng": [
+          53.4357192066942,
+          28.346742526840664
+        ]
+      },
+      "savedStyle": "underline"
+    }
+  ],
+  "currencies": []
+}

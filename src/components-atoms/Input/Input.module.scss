@@ -1,0 +1,23 @@
+@import '../../../src/styles/settings.scss';
+
+.root {
+  .label {
+    font-size: 10px;
+    color: transparent;
+  }
+  .input {
+    width: 100%;
+    padding: 10px 0;
+    border-radius: 5%;
+    font-size: 16px;
+    border-color: transparent;
+    border-bottom: black 1px solid;
+    outline-style: none;
+    &:focus::placeholder {
+      color: transparent;
+    }
+  }
+  &:focus-within .label {
+    color: black;
+  }
+}

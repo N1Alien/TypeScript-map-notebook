@@ -1,0 +1,84 @@
+{
+  "name": "react-ts",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@material-ui/core": "^4.11.3",
+    "@material-ui/icons": "^4.11.2",
+    "@testing-library/jest-dom": "^5.11.4",
+    "@testing-library/react": "^11.1.0",
+    "@testing-library/user-event": "^12.1.10",
+    "@types/jest": "^26.0.15",
+    "@types/node": "^12.0.0",
+    "@types/react": "^17.0.0",
+    "@types/react-dom": "^17.0.0",
+    "axios": "^0.21.1",
+    "clsx": "^1.1.1",
+    "concurrently": "^6.0.2",
+    "country-reverse-geocoding": "^0.2.2",
+    "eslint-config-airbnb-typescript-prettier": "^4.2.0",
+    "json-server": "^0.16.3",
+    "leaflet": "^1.9.4",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^2.2.1",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-redux": "^7.2.3",
+    "react-router-dom": "^5.2.0",
+    "react-sparklines": "^1.7.0",
+    "redux": "^4.0.5",
+    "redux-thunk": "^2.3.0",
+    "sass": "^1.103.1",
+    "typescript": "^4.1.2",
+    "web-vitals": "^1.0.1"
+  },
+  "scripts": {
+      "start": "vite --port 8000",
+  "build": "tsc && vite build",
+  "preview": "vite preview",
+    "api": "json-server --watch db.json",
+    "dev": "concurrently \"yarn start\" \"yarn api\"",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "fl": "prettier . — write && tsc — noEmit && eslint --fix '*.{js,jsx,ts,tsx}'"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "src/**/*.js": [
+      "yarn test-related --",
+      "eslint"
+    ]
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9.22",
+    "@types/react-router-dom": "^5.1.7",
+    "@types/react-sparklines": "^1.7.0",
+    "@vitejs/plugin-react": "^6.1.0",
+    "husky": "^6.0.0",
+    "lint-staged": "^10.5.4",
+    "redux-devtools-extension": "^2.13.9",
+    "vite": "^8.2.2"
+  }
+}

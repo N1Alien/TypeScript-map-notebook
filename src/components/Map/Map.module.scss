@@ -1,0 +1,16 @@
+@import '../../../src/styles/settings.scss';
+
+.root {
+  width: 60vw;
+  min-width: 310px;
+  text-align: center;
+  margin: 0 auto;
+  background-color: #fff;
+  /* Zapobiega zniekształceniom i obwódkom wokół naszej nowej ikony pinezki */
+}
+.customSvgMarker {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Usuń nadmiarowy nawias klamrowy */

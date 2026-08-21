@@ -1,0 +1,37 @@
+@import '../../../src/styles/settings.scss';
+
+.root {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.rootHeader {
+  border-bottom: 2px solid black;
+}
+
+.rootRows {
+  border: 1px solid black;
+  padding: 5px;
+  &:nth-child(2) {
+    color: blue;
+    cursor: pointer;
+    text-align: center;
+  }
+  &:last-child {
+    text-align: right;
+  }
+}
+
+.rowLines:nth-child(even) {
+  background-color: lightgray;
+  &:hover {
+    background-color: lightslategray;
+  }
+}
+
+.rowLines:nth-child(odd) {
+  background-color: whitesmoke;
+  &:hover {
+    background-color: lightslategray;
+  }
+}
