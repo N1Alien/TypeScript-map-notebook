@@ -1,14 +1,7 @@
 import * as React from 'react';
 import clsx from 'clsx';
 import styles from './Intel.module.scss';
-import Card from '@material-ui/core/Card';
-import CardActionArea from '@material-ui/core/CardActionArea';
-import CardActions from '@material-ui/core/CardActions';
-import CardContent from '@material-ui/core/CardContent';
-import Typography from '@material-ui/core/Typography';
 import { useSelector } from 'react-redux';
-import { Paper } from '@material-ui/core';
-import { Button } from '../../components-atoms/Button/Button';
 
 interface Props {
   className?: string;
@@ -19,52 +12,94 @@ const Component: React.FC<Props> = ({ className }) => {
 
   let countryData: any = null;
   if (intel) {
-    if (Array.isArray(intel)) {
-      countryData = Array.isArray(intel) ? intel : intel;
-    } else {
-      countryData = intel;
-    }
+    countryData = Array.isArray(intel) ? intel[0] : intel;
   }
 
   if (!countryData || !countryData.name || countryData.name === 'Unknown') {
-    return null;
+    return (
+      <div style={{ 
+        border: '1px dashed #00f0ff', 
+        padding: '20px', 
+        textAlign: 'center', 
+        marginTop: '20px',
+        color: '#00f0ff',
+        textTransform: 'uppercase'
+      }}>
+        📡 [SYSTEM_STATUS] STANDBY // Awaiting satellite uplink marker on the grid...
+      </div>
+    );
   }
 
   return (
-    <Card className={clsx(className, styles.root)} style={{ boxShadow: 'none', border: 'none', marginTop: '20px' }}>
-      <CardActionArea className={styles.cont}>
-        <Paper variant="outlined" style={{ display: 'inline-block', padding: '10px' }}>
-          <img src={countryData.flag} alt="flag" style={{ maxWidth: '150px', height: 'auto' }} />
-        </Paper>
-        <CardContent>
-          <Typography gutterBottom variant="h5" component="h2">Subregion: {countryData.subregion}</Typography>
-          <Typography gutterBottom variant="h5" component="h2">Country: {countryData.name}</Typography>
-          <Typography gutterBottom variant="h5" component="h2">
-            Currency: {countryData.currencies && countryData.currencies ? countryData.currencies.name : 'N/A'}
-          </Typography>
-          <Typography gutterBottom variant="h5" component="h2">Capital: {countryData.capital}</Typography>
-          <Typography gutterBottom variant="h5" component="h2">
-            Language: {countryData.languages && countryData.languages ? countryData.languages.name : 'N/A'}
-          </Typography>
-          <Typography gutterBottom variant="h5" component="h2">Native Name: {countryData.nativeName}</Typography>
-        </CardContent>
-      </CardActionArea>
+    <div 
+      className={clsx(className, styles.root)} 
+      style={{ 
+        backgroundColor: '#050505',
+        border: '2px solid #00f0ff', 
+        borderRadius: '0px', // Cyberpunk unika zaokrągleń - wszystko ma być ostre!
+        marginTop: '20px',
+        padding: '25px',
+        boxShadow: '0 0 15px rgba(0, 240, 255, 0.3)',
+        animation: 'neonGlow 4s infinite'
+      }}
+    >
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'center', justifyContent: 'center' }}>
+        
+        {/* Kontener flagi z ramką militarną */}
+        <div style={{ 
+          border: '2px solid #ff0055', 
+          padding: '6px', 
+          background: '#000',
+          boxShadow: '0 0 8px #ff0055'
+        }}>
+          <img src={countryData.flag} alt="matrix-flag" style={{ maxWidth: '160px', height: 'auto', display: 'block' }} />
+        </div>
+
+        {/* Czyste, terminalowe wyciąganie parametrów */}
+        <div style={{ flex: 1, minWidth: '250px', color: '#fff', fontSize: '1.1rem', textTransform: 'uppercase' }}>
+          <div style={{ color: '#fcee0a', fontWeight: 'bold', fontSize: '1.4rem', borderBottom: '1px solid #fcee0a', paddingBottom: '5px', marginBottom: '10px' }}>
+            🛰️ TARGET_DATA // {countryData.name}
+          </div>
+          <p style={{ margin: '5px 0' }}><span style={{ color: '#00f0ff' }}>ZONE_SUBREGION:</span> {countryData.subregion}</p>
+          <p style={{ margin: '5px 0' }}><span style={{ color: '#00f0ff' }}>NATIVE_CYPHER:</span> {countryData.nativeName}</p>
+          <p style={{ margin: '5px 0' }}><span style={{ color: '#00f0ff' }}>POLITICAL_CORE:</span> {countryData.capital}</p>
+          <p style={{ margin: '5px 0' }}><span style={{ color: '#00f0ff' }}>CREDIT_CURRENCY:</span> {countryData.currencies?.[0]?.name || 'N/A'}</p>
+          <p style={{ margin: '5px 0' }}><span style={{ color: '#00f0ff' }}>LINK_LANGUAGE:</span> {countryData.languages?.[0]?.name || 'N/A'}</p>
+        </div>
+      </div>
       
-      {/* POPRAWKA: Dodano justify-content: center do kontenera przycisku */}
-      <CardActions style={{ justifyContent: 'center', paddingBottom: '15px' }}>
-        <Button
-          text="wikipedia"
+      {/* WYŚRODKOWANY, CYBERPUNKOWY PRZYCISK WIKIPEDII */}
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+        <button
           onClick={() => {
             const s = String.fromCharCode(47);
             const countryCleanName = String(countryData.name).trim();
             const formattedName = countryCleanName.charAt(0).toUpperCase() + countryCleanName.slice(1);
             const ostatecznyUrlWiki = "https:" + s + s + "en.wikipedia.org" + s + "wiki" + s + formattedName;
-            
             window.open(ostatecznyUrlWiki, '_blank');
           }}
-        />
-      </CardActions>
-    </Card>
+          style={{
+            background: '#ff0055',
+            color: '#fff',
+            fontFamily: "'Share Tech Mono', monospace",
+            fontSize: '1.1rem',
+            fontWeight: 'bold',
+            padding: '10px 30px',
+            border: 'none',
+            cursor: 'pointer',
+            textTransform: 'uppercase',
+            letterSpacing: '2px',
+            boxShadow: '0 0 10px #ff0055',
+            transition: 'transform 0.1s',
+            animation: 'cyberPulse 2s infinite'
+          }}
+          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          NET_MATRIX_SEARCH [WIKIPEDIA]
+        </button>
+      </div>
+    </div>
   );
 };
 

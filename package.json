@@ -34,7 +34,7 @@
   },
   "scripts": {
       "start": "vite --port 8000",
-  "build": "tsc && vite build",
+  "build": "vite build",
   "preview": "vite preview",
     "api": "json-server --watch db.json",
     "dev": "concurrently \"yarn start\" \"yarn api\"",

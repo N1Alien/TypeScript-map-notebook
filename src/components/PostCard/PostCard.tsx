@@ -10,15 +10,28 @@ interface Props {
 }
 
 const Component: React.FC<Props> = ({ className }) => {
-  const posts = useSelector((state) => state);
+  const posts = useSelector((state: any) => state);
   let items: Array<any>;
+  
   const getItems = () => {
-    items = Object.values(posts['posts']);
+    const list = posts && posts['posts'] ? posts['posts'] : [];
+    items = Object.values(list);
     return items;
   };
 
   return (
-    <div className={clsx(className, styles.root)}>
+    <div 
+      className={clsx(className, styles.root)} 
+      style={{ 
+        display: 'flex', 
+        flexWrap: 'wrap', 
+        justifyContent: 'center', 
+        gap: '10px', 
+        padding: '20px',
+        position: 'relative',
+        zIndex: 5
+      }}
+    >
       {getItems().map((post: Task) => (
         <Post data={post} key={post.id}/>
       ))}

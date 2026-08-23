@@ -2,9 +2,8 @@ import * as React from 'react';
 import clsx from 'clsx';
 import styles from './DetailsView.module.scss';
 import Card from '@material-ui/core/Card';
-import CardContent from '@material-ui/core/CardContent';
-import { useDispatch } from 'react-redux';
-import { fetchDynamicIntel, resetIntelAction, addCoord, importedIntelAction } from '../../redux/actions'; 
+import { useSelector, useDispatch } from 'react-redux';
+import { Task, fetchDynamicIntel, resetIntelAction, addCoord, importedIntelAction } from '../../redux/actions'; 
 import { useParams } from 'react-router-dom';
 import { Map } from '../Map/Map';
 import { useState, useEffect } from 'react';
@@ -23,12 +22,20 @@ const Component: React.FC<Props> = ({ className }) => {
   const dispatch = useDispatch();
   const safePostId = parseInt(params.id, 10);
 
+  const PROD_BACKEND_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "");
+
+  const currentPost = useSelector((state: any) => {
+    const postsList = state['posts'] || [];
+    const found = postsList.filter((post: Task) => String(post.id) === String(params.id));
+    return found.length > 0 ? found : null;
+  });
+
   const [distance, setDistance] = useState('');
   const [hasClicked, setHasClicked] = useState(false);
   const [taskContent, setTaskContent] = useState('');
 
   const obliczDystansMiedzyPunktami = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 6371; // Promień Ziemi w km
+    const R = 6371; 
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
     const dLon = ((lon2 - lon1) * Math.PI) / 180;
     const a =
@@ -49,8 +56,6 @@ const Component: React.FC<Props> = ({ className }) => {
     if (safeLng < -180) safeLng += 360;
 
     const bdcUrl = "https:" + s + s + "api.bigdatacloud.net" + s + "data" + s + "reverse-geocode-client?latitude=" + safeLat + "&longitude=" + safeLng + "&localityLanguage=en";
-
-    console.log(`📡 [CHMURA] Odpytuję o punkt: lat: ${safeLat}, lng: ${safeLng}`);
 
     Axios.get<any>(bdcUrl)
       .then((res) => {
@@ -79,7 +84,6 @@ const Component: React.FC<Props> = ({ className }) => {
             latlng: [safeLat, safeLng]
           };
 
-          // WYMIAR LICZENIA ODLEGŁOŚCI OD TWÓJEGO GPS
           if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition((position) => {
               const userLat = position.coords.latitude;
@@ -88,12 +92,9 @@ const Component: React.FC<Props> = ({ className }) => {
               const obliczonyDystans = Math.floor(obliczDystansMiedzyPunktami(userLat, userLon, safeLat, safeLng));
               const stringDystans = String(obliczonyDystans);
 
-              // Blokujemy stany lokalne natychmiastowo na stałe
               setDistance(stringDystans);
               setHasClicked(true);
               dispatch(importedIntelAction(dynamicIntelData));
-
-              // Bezpieczny i trwały zapis PUT
               const contentText = taskContent || "Task " + safePostId;
               dispatch(addCoord(safePostId, contentText, { lat: safeLat, lng: safeLng }, stringDystans, dynamicIntelData) as any);
             });
@@ -103,23 +104,15 @@ const Component: React.FC<Props> = ({ className }) => {
       .catch((err) => console.error("❌ Błąd pobierania geolokalizacji:", err));
   };
 
-  // POPRAWKA KLUCZ: Ładujemy dane bezwzględnie i bezpośrednio z bazy danych json-server na starcie!
   useEffect(() => {
     window.onbeforeunload = function () { return true; };
-    
-    // Reset widoku na wejściu do nowej karty
     setDistance('');
     setHasClicked(false);
     dispatch(resetIntelAction());
-
-    console.log(`📡 [TWARDY REFRESH] Pobieram stan archiwalny dla ID: ${safePostId}`);
-    
-    Axios.get(`http://localhost:4000/posts/${safePostId}`)
+    Axios.get(`${PROD_BACKEND_URL}/posts/${safePostId}`)
       .then((res) => {
         if (res.data) {
           setTaskContent(res.data.content || '');
-          
-          // Jeśli w db.json są już zapisane współrzędne oraz odległość - wstrzykujemy je bezpośrednio!
           if (res.data.coord && res.data.coord.lat) {
             setHasClicked(true);
             if (res.data.distance) {
@@ -131,18 +124,43 @@ const Component: React.FC<Props> = ({ className }) => {
           }
         }
       })
-      .catch((err) => console.log("Nowe zadanie, brak wpisu w db.json:", err));
-  }, [safePostId]);
+      .catch((err) => console.log("Nowe zadanie, brak wpisu archiwalnego w bazie Neon SQL:", err));
+  }, [safePostId, PROD_BACKEND_URL]);
 
   return (
-    <Card className={clsx(className, styles.root)}>
-      <CardContent>
+    <Card 
+      className={clsx(className, styles.root)} 
+      style={{ 
+        background: '#000000', 
+        border: '2px solid #00f0ff', 
+        borderRadius: '0px', 
+        padding: '15px',
+        boxShadow: '0 0 15px rgba(0, 240, 255, 0.2)'
+      }}
+    >
+      <div style={{ width: '100%', height: '500px', background: '#000' }}>
         <Map getIntel={getIntel} />
-      </CardContent>
-      <div style={{ padding: '10px 0', textAlign: 'center' }}>
+      </div>
+      
+      {/* CYBERPUNK HUD DISTANCE COUNTER */}
+      <div style={{ padding: '15px 0', display: 'flex', justifyContent: 'center' }}>
         {hasClicked && distance && (
-          <div className={styles.dist} style={{ fontWeight: 'bold', fontSize: '1.2rem', color: '#2c3e50' }}>
-            📍 Distance to selected checkpoint: {distance} km
+          <div 
+            className={styles.dist} 
+            style={{ 
+              fontWeight: 'bold', 
+              fontSize: '1.3rem', 
+              color: '#fff', 
+              backgroundColor: '#ff0055',
+              padding: '10px 25px',
+              border: '2px solid #fff',
+              boxShadow: '0 0 15px #ff0055',
+              letterSpacing: '1px',
+              textTransform: 'uppercase',
+              fontFamily: "'Share Tech Mono', monospace"
+            }}
+          >
+            ⚡ RANGE_TO_TARGET_GRID: {distance} KM // ACCESS_GRANTED
           </div>
         )}
       </div>

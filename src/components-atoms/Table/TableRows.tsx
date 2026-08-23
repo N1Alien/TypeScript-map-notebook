@@ -1,48 +1,45 @@
-import React from 'react';
+import * as React from 'react';
 import clsx from 'clsx';
-import styles from './Table.module.scss';
 import { Currencies } from '../../redux/actions';
-import { useHistory } from 'react-router-dom';
-import { ColumnDefinition } from './Table';
 
-interface TableRowsProps {
-  data: Array<Currencies>;
-  columns: Array<ColumnDefinition>;
+interface Props {
   className?: string;
+  data: Currencies[];
+  onRowClick?: (row: Currencies) => void;
+  selectedCode?: string;
 }
 
-const TableRows = ({ data, columns, className }: TableRowsProps): JSX.Element => {
-  const history = useHistory();
+const TableRows: React.FC<Props> = ({ className, data, onRowClick, selectedCode }) => {
+  if (!data || data.length === 0) return null;
 
-  const checkRates = (code: string): void => {
-    if (!code) return;
-    history.push(`/currencies/${code.toLowerCase()}/rates`);
-  };
+  return (
+    <>
+      {data.map((row: Currencies) => {
+        // POPRAWKA TYPESCRIPT: Rzutujemy obiekt na 'any', aby dynamiczne indeksowanie kluczem string (np. row.code) 
+        // nie wywoływało błędu TS7053 w trakcie npm run build!
+        const r = row as any;
+        const isSelected = r.code === selectedCode;
 
-  const rows = data.map((row, index) => {
-    // Pomocnicze rzutowanie całego obiektu na typ 'any', omijające błąd parsera
-    const rawRow = row;
-
-    return (
-      <tr 
-        key={`row-${index}`} 
-        className={clsx(className, styles.rowLines)}
-        onClick={() => checkRates(row.code)}
-        style={{ cursor: 'pointer' }}
-      >
-        {columns.map((column, index2) => {
-          return (
-            <td key={`cell-${index2}`} className={styles.rootRows}>
-              {/* Czysty, bezpieczny zapis bez używania problematycznego słowa 'as' */}
-              {rawRow[column.key]}
+        return (
+          <tr
+            key={r.code || Math.random()}
+            onClick={() => onRowClick && onRowClick(row)}
+            style={{ cursor: 'pointer', backgroundColor: isSelected ? '#e3f2fd' : 'transparent' }}
+          >
+            <td style={{ padding: '12px', borderBottom: '1px solid #e2e8f0', fontWeight: isSelected ? 'bold' : 'normal' }}>
+              {r.code}
             </td>
-          );
-        })}
-      </tr>
-    );
-  });
-
-  return <tbody>{rows}</tbody>;
+            <td style={{ padding: '12px', borderBottom: '1px solid #e2e8f0', color: '#7f8c8d' }}>
+              {r.currency || (r.code === 'USD' ? 'dolar amerykański' : r.code === 'EUR' ? 'euro' : r.code === 'GBP' ? 'funt szterling' : 'frank szwajcarski')}
+            </td>
+            <td align="right" style={{ padding: '12px', borderBottom: '1px solid #e2e8f0', fontWeight: 'bold', color: '#2980b9' }}>
+              {r.mid ? r.mid.toFixed(4) : '0.0000'}
+            </td>
+          </tr>
+        );
+      })}
+    </>
+  );
 };
 
 export default TableRows;

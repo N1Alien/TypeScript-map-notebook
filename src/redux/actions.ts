@@ -1,4 +1,8 @@
 import Axios from 'axios';
+// PRODUKCYJNA REWOLUCJA: Pobieramy adres serwera Pythona ze zmiennej chmurowej,
+// a jeśli odpalamy aplikację lokalnie na komputerze – automatycznie wracamy do portu 5000!
+const PROD_BACKEND_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "");
+
 
 export enum PostActions {
   ADD_POST = 'Add post',

@@ -2,28 +2,48 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <!-- Vite ładuje ikony bezpośrednio z folderu public, usuwamy stare %PUBLIC_URL% -->
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"> 
-    <meta name="description" content="Web site created using Vite" />
-    <link rel="apple-touch-icon" href="/logo192.png" />
-    <link rel="manifest" href="/manifest.json" />
+    <meta name="description" content="Cyber-Deck Terminal Interface" />
     
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+    <!-- Oficjalna cyberpunkowa czcionka z Cyberpunka 2077 -->
+    <link rel="stylesheet" href="https://googleapis.com" />
 
-    <!-- POPRAWKA KLUCZ: Pełne, prawidłowe ścieżki do darmowej i dożywotniej mapy open-source Leaflet -->
+    <!-- Style mapy Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com" />
     <script src="https://unpkg.com"></script>
 
-    <title>React Map App</title>
+    <title>CYBER_DECK // OS_v2.077</title>
+
+    <style>
+      /* Globalny reset interfejsu na styl Night City */
+      body, html, #root {
+        margin: 0;
+        padding: 0;
+        background-color: #000000 !important;
+        color: #fcee0a !important;
+        font-family: 'Share Tech Mono', monospace !important;
+        overflow-x: hidden;
+      }
+      
+      /* Animacja mrugania awaryjnego dla paneli HUD */
+      @keyframes cyberPulse {
+        0% { opacity: 0.8; box-shadow: 0 0 4px #ff0055; }
+        50% { opacity: 1; box-shadow: 0 0 16px #ff0055; }
+        100% { opacity: 0.8; box-shadow: 0 0 4px #ff0055; }
+      }
+
+      @keyframes neonGlow {
+        0% { border-color: #00f0ff; box-shadow: 0 0 5px #00f0ff; }
+        50% { border-color: #fcee0a; box-shadow: 0 0 15px #fcee0a; }
+        100% { border-color: #00f0ff; box-shadow: 0 0 5px #00f0ff; }
+      }
+    </style>
   </head>
   <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-
-    <!-- POPRAWKA VITE: Łączymy plik HTML z Twoim głównym punktem startowym TypeScriptu aplikacji -->
     <script type="module" src="/src/index.tsx"></script>
   </body>
 </html>

@@ -5,7 +5,6 @@ import Card from '@material-ui/core/Card';
 import CardActionArea from '@material-ui/core/CardActionArea';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
-import CardMedia from '@material-ui/core/CardMedia';
 import Typography from '@material-ui/core/Typography';
 import { Task } from '../../redux/actions';
 import { ButtonsRadio } from '../ButtonsRadio/ButtonsRadio';
@@ -13,8 +12,7 @@ import { useDispatch } from 'react-redux';
 import { removePost, editPostAction } from '../../redux/actions';
 import { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { Button } from '../../components-atoms/Button/Button';
-import Axios from 'axios'; // Zaimportowano Axios do trwałej synchronizacji zmian tekstu
+import Axios from 'axios';
 
 interface Props {
   className?: string;
@@ -26,7 +24,6 @@ const Post: React.FC<Props> = ({ className, data }) => {
   const history = useHistory();
   const [style, setStyle] = useState<React.CSSProperties | undefined>(undefined);
 
-  // POPRAWKA LOGIKI STYLIZACJI: Wymuszamy natychmiastowe nałożenie stylów inline bez opóźnień wątku Reacta
   useEffect(() => {
     let styleForText: React.CSSProperties = {};
     if (data.savedStyle === 'bold') {
@@ -39,46 +36,82 @@ const Post: React.FC<Props> = ({ className, data }) => {
     setStyle(styleForText);
   }, [data.savedStyle]);
 
-  const handleClick = (destination: string) => {
-    history.push(`${destination}`);
-  };
-
-  // POPRAWKA SYNCHRONIZACJI: Ta funkcja dba o to, aby edytowany na karcie tekst od razu zapisał się w db.json
   const handleTextBlur = (e: any) => {
     const nowyTekst = e.target.textContent;
-    
-    // 1. Aktualizacja lokalnego stanu Redux Store
-    dispatch(editPostAction({
-      ...data,
-      content: nowyTekst,
-    }));
+    dispatch(editPostAction({ ...data, content: nowyTekst }));
 
-    // 2. Trwały strzał sieciowy PUT do bazy danych na porcie 4000
-    Axios.put(`http://localhost:4000/posts/${data.id}`, {
-      ...data,
-      content: nowyTekst
-    })
-    .then(() => console.log(`💾 [TEKST ZAPISANY] Pomyślnie zaktualizowano treść zadania ID ${data.id}`))
-    .catch(err => console.error("❌ Błąd zapisu zmienionego tekstu w bazie:", err));
+    const baseApiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+    Axios.put(`${baseApiUrl}/posts/${data.id}`, { ...data, content: nowyTekst })
+      .catch(err => console.error(err));
   };
 
   return (
-    <div className={clsx(className, styles.root)}>
-      <Card className={styles.media}>
+    <div className={clsx(className, styles.root)} style={{ display: 'inline-block', margin: '15px', verticalAlign: 'top' }}>
+      {/* OFICJALNA CYBERPUNKOWA KARTA KONTROLI ZADAŃ - SOCZYSTY ŻÓŁTY I CZERŃ */}
+      <Card 
+        style={{ 
+          backgroundColor: '#fcee0a', // Oficjalny żółty kolor Cyberpunk 2077
+          color: '#000000', 
+          borderRadius: '0px', 
+          width: '280px',
+          borderLeft: '5px solid #000000',
+          borderBottom: '4px solid #ff0055',
+          boxShadow: '0px 0px 10px rgba(252, 238, 10, 0.4)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}
+      >
+        {/* Dekoracyjny trójkąt militarny w rogu karty */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          width: '0',
+          height: '0',
+          borderStyle: 'solid',
+          borderWidth: '0 20px 20px 0',
+          borderColor: `transparent #ff0055 transparent transparent`
+        }} />
+
         <CardActionArea>
-          <CardMedia image="/static/images/cards/contemplative-reptile.jpg" />
-          <CardContent spellCheck="false">
-            <h5 className={styles.id}>{data.id}</h5>
-            <div className={styles.radios}>
-              <ButtonsRadio id={data.id} />
+          <CardContent style={{ padding: '15px' }}>
+            {/* Nagłówek ID zadania */}
+            <h5 style={{ 
+              margin: '0 0 10px 0', 
+              fontFamily: "'Share Tech Mono', monospace", 
+              fontSize: '1rem', 
+              backgroundColor: '#000', 
+              color: '#fcee0a', 
+              display: 'inline-block', 
+              padding: '2px 8px',
+              letterSpacing: '1px'
+            }}>
+              DATA_CHKP // {data.id}
+            </h5>
+            
+            <div style={{ marginTop: '10px' }}>
+              {/* Przełączniki B, I, U stylizowane na neonowe kropki */}
+              <div style={{ marginBottom: '10px', opacity: 0.85 }}>
+                <ButtonsRadio id={data.id} />
+              </div>
+
+              {/* Treść zadania - Edytowalna na żywo z zapisem do Neon SQL */}
               <Typography
-                variant="body2"
-                color="textSecondary"
+                variant="body1"
                 component="p"
                 contentEditable
                 suppressContentEditableWarning={true}
-                style={style}
-                className={styles.content}
+                style={{ 
+                  ...style, 
+                  fontFamily: "'Share Tech Mono', monospace", 
+                  fontSize: '1.2rem', 
+                  color: '#000',
+                  padding: '5px',
+                  background: 'rgba(0,0,0,0.03)',
+                  borderLeft: '2px solid #ff0055',
+                  minHeight: '40px',
+                  outline: 'none'
+                }}
                 onBlur={handleTextBlur}
               >
                 {data.content}
@@ -86,9 +119,42 @@ const Post: React.FC<Props> = ({ className, data }) => {
             </div>
           </CardContent>
         </CardActionArea>
-        <CardActions>
-          <Button text="Remove" onClick={() => dispatch(removePost(data.id))} />
-          <Button text="Details" onClick={() => handleClick(`/post/${data.id}`)} />
+
+        {/* AKCJE KARTY: Remove oraz Details jako surowe przyciski terminalowe */}
+        <CardActions style={{ justifyContent: 'space-between', padding: '10px 15px', backgroundColor: 'rgba(0,0,0,0.05)' }}>
+          <button 
+            onClick={() => dispatch(removePost(data.id) as any)}
+            style={{
+              background: '#000000',
+              color: '#ff0055',
+              border: 'none',
+              fontFamily: "'Share Tech Mono', monospace",
+              fontSize: '0.9rem',
+              fontWeight: 'bold',
+              padding: '5px 12px',
+              cursor: 'pointer',
+              textTransform: 'uppercase'
+            }}
+          >
+            [ REMOVE ]
+          </button>
+          
+          <button 
+            onClick={() => history.push(`/post/${data.id}`)}
+            style={{
+              background: '#000000',
+              color: '#00f0ff',
+              border: 'none',
+              fontFamily: "'Share Tech Mono', monospace",
+              fontSize: '0.9rem',
+              fontWeight: 'bold',
+              padding: '5px 12px',
+              cursor: 'pointer',
+              textTransform: 'uppercase'
+            }}
+          >
+            [ DETAILS  ---]
+          </button>
         </CardActions>
       </Card>
     </div>

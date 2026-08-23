@@ -8,14 +8,13 @@ import Axios from 'axios';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// NOWOCZESNY I PIĘKNY MARKER WEKTOROWY SVG (Z POPRAWIONYMI WARTOŚCIAMI LICZBOWYMI)
 const pieknePancerneIcon = L.divIcon({
-  html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#e74c3c" width="32px" height="32px">
+  html: `<svg xmlns="http://w3.org" viewBox="0 0 24 24" fill="#ff0055" width="32px" height="32px" style="filter: drop-shadow(0 0 8px #ff0055);">
            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
          </svg>`,
   className: styles.customSvgMarker || 'custom-marker',
-  iconSize: [32, 32], // Szerokość i wysokość markera w pikselach
-  iconAnchor: [16, 32] // Punkt zakotwiczenia dolnego dzióbka pinezki na współrzędnych mapy
+  iconSize: [32, 32],
+  iconAnchor: [16, 32]
 });
 
 interface Props {
@@ -36,19 +35,18 @@ const Component: React.FC<Props> = ({ className, getIntel }) => {
 
   const safeId = parseInt(params.id || '0', 10);
   const [savedPostData, setSavedPostData] = useState<any>(null);
+  const PROD_BACKEND_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "");
 
-  // Pobieramy dane bezpośrednio z json-server dla tego konkretnego ID
   useEffect(() => {
-    Axios.get(`http://localhost:4000/posts/${safeId}`)
+    Axios.get(`${PROD_BACKEND_URL}/posts/${safeId}`)
       .then((res) => {
         if (res.data) {
           setSavedPostData(res.data);
         }
       })
       .catch((err) => console.log(err));
-  }, [safeId]);
+  }, [safeId, PROD_BACKEND_URL]);
 
-  // Rysowanie i centrowanie markera przy użyciu pięknej ikony SVG
   useEffect(() => {
     if (savedPostData && savedPostData.coord && savedPostData.coord.lat && mapInstanceRef.current) {
       const lat = savedPostData.coord.lat;
@@ -59,21 +57,30 @@ const Component: React.FC<Props> = ({ className, getIntel }) => {
       if (markerInstanceRef.current) {
         mapInstanceRef.current.removeLayer(markerInstanceRef.current);
       }
-      // Wstrzykujemy naszą bezpieczną wektorową ikonę
       markerInstanceRef.current = L.marker([lat, lng], { icon: pieknePancerneIcon }).addTo(mapInstanceRef.current);
+      
+      // POPRAWKA: Wymuszamy na silniku Leaflet przeliczenie wymiarów kontenera po załadowaniu markera
+      setTimeout(() => {
+        if (mapInstanceRef.current) mapInstanceRef.current.invalidateSize();
+      }, 100);
     }
   }, [savedPostData]);
 
   useLayoutEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
-    // Startowy widok mapy
     const map = L.map(mapRef.current).setView([52.2297, 21.0122], 4);
     mapInstanceRef.current = map;
 
+    // Korzystamy z superstabilnego OpenStreetMap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
+
+    // POPRAWKA: Wymuszamy natychmiastowe przeliczenie wymiarów przy starcie mapy
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 50);
 
     return () => {
       if (mapInstanceRef.current) {
@@ -95,13 +102,12 @@ const Component: React.FC<Props> = ({ className, getIntel }) => {
     if (safeLng > 180) safeLng -= 360;
     if (safeLng < -180) safeLng += 360;
 
-    console.log(`🎯 [PANCERNY KLIK] Rejestruję punkt dla zadania ID ${safeId}: lat: ${safeLat}, lng: ${safeLng}`);
+    console.log(`🎯 [PANCERNY KLIK] Rejestruję punkt: lat: ${safeLat}, lng: ${safeLng}`);
 
     if (markerInstanceRef.current) {
       map.removeLayer(markerInstanceRef.current);
     }
 
-    // Dodanie pięknego, wektorowego markera po kliknięciu
     markerInstanceRef.current = L.marker([safeLat, safeLng], { icon: pieknePancerneIcon }).addTo(map);
     getIntel(safeLat, safeLng);
   };
@@ -112,7 +118,14 @@ const Component: React.FC<Props> = ({ className, getIntel }) => {
         className="map" 
         ref={mapRef} 
         onClick={handleMapClick}
-        style={{ height: '500px', width: '100%', background: '#eaeaea', cursor: 'crosshair' }}
+        style={{ 
+          height: '500px', 
+          width: '100%', 
+          background: '#0d0d0d', 
+          cursor: 'crosshair',
+          // HAK CYBERPUNKOWY CSS: Odwracamy kolory standardowej mapy i nadajemy jej neonowy, zielono-niebieski odcień hakera!
+          filter: 'invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)'
+        }}
       ></div>
     </div>
   );

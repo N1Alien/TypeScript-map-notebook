@@ -32,7 +32,7 @@ useEffect(() => {
         <Toolbar>
           <Button text="Home" mode="nav" onClick={() => handleClick('/')} />
           <AddTask>AddTask</AddTask>
-          <Button text="Currencies" mode="nav" onClick={() => handleClick('/currencies')} />
+          {/* <Button text="Currencies" mode="nav" onClick={() => handleClick('/currencies')} /> */}
         </Toolbar>
       </AppBar>
     </div>
