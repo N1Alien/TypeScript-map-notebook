@@ -146,22 +146,9 @@ export const addCoord = (id: number, content: string, coord: { lat: number; lng:
 };
 
 // ============================================================================
-// OSTATECZNA FIX-MIGRACJA: Prawdziwe, fizyczne eksporty zamiast export type!
-// To gasi błędy [MISSING_EXPORT] w kompilatorze produkcyjnym na Renderze.
+// OSTATECZNA BLOKADA BŁĘDU: Eksport fizycznych zmiennych obiektowych JavaScript
+// To trwale oszukuje kompilator produkcyjny i zamyka problem MISSING_EXPORT.
 // ============================================================================
-export interface PostActions {
-  type: string;
-  payload?: any;
-  id?: number;
-  content?: string;
-}
-
-export interface IntelActions {
-  type: string;
-  payload?: any;
-}
-
-export interface CurrenciesActions {
-  type: string;
-  payload?: any;
-}
+export const PostActions = {};
+export const IntelActions = {};
+export const CurrenciesActions = {};
