@@ -139,25 +139,25 @@ export const fetchDynamicIntel = (rawBdcData: any) => {
 };
 
 
-// OSTAECZNY ADRES PRODUKCYJNY TWOJEGO BACKENDU NA RENDERZE
-const PROD_BACKEND_URL = "https://onrender.com";
+// OSTATECZNA POPRAWKA: Podmieniamy ogólny adres onrender.com na Twoją DOKŁADNĄ subdomenę z panelu Render!
+// Pamiętaj, aby na końcu adresu NIE BYŁO ukośnika "/"!
+const PROD_BACKEND_URL = "https://cyber-map-backend.onrender.com";
 
 export const fetchPosts = () => {
   return (dispatch: (arg0: PostActionsTypes) => void) => {
-    // ZMIANA: localhost:4000/posts zamieniamy na bezpieczny adres chmurowy!
+    console.log("📡 [CYBER_DECK LINK] Fetching core nodes from: " + PROD_BACKEND_URL);
     Axios.get(`${PROD_BACKEND_URL}/posts`)
       .then((res) => {
         if (res.data) {
           dispatch(importedPostsAction(res.data));
         }
       })
-      .catch((err) => console.error("❌ Błąd pobierania postów z chmury:", err));
+      .catch((err) => console.error("❌ Błąd pobierania postów z chmury Neon:", err));
   };
 };
 
 export const removePost = (id: number) => {
   return (dispatch: (arg0: PostActionsTypes) => void) => {
-    // ZMIANA: Bezpieczne usuwanie rekordu bezpośrednio z chmury Neon SQL
     Axios.delete(`${PROD_BACKEND_URL}/posts/${id}`)
       .then(() => dispatch(removePostAction(id)))
       .catch((err) => console.error("❌ Błąd usuwania z chmury:", err));
@@ -166,7 +166,6 @@ export const removePost = (id: number) => {
 
 export const addPost = (id: number, content: string, savedStyle: string = "default") => {
   return (dispatch: (arg0: PostActionsTypes) => void) => {
-    // ZMIANA: Dodawanie nowego, żółtego kafelka z czystym tekstem prosto do bazy online
     Axios.post(`${PROD_BACKEND_URL}/posts`, { 
       id, 
       content, 
