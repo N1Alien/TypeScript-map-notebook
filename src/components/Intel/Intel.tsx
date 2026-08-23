@@ -2,17 +2,19 @@ import * as React from 'react';
 import clsx from 'clsx';
 import styles from './Intel.module.scss';
 import { useSelector } from 'react-redux';
+import { RootState } from '../../redux/actions';
 
 interface Props {
   className?: string;
 }
 
 const Component: React.FC<Props> = ({ className }) => {
-  const intel = useSelector((state: any) => state['intel']);
+  // POPRAWKA: Precyzyjnie wyciągamy obiekt intel przy użyciu struktury RootState
+  const intel = useSelector((state: RootState) => state.intel);
 
   let countryData: any = null;
   if (intel) {
-    countryData = Array.isArray(intel) ? intel[0] : intel;
+    countryData = Array.isArray(intel) ? intel : intel;
   }
 
   if (!countryData || !countryData.name || countryData.name === 'Unknown') {
@@ -36,7 +38,7 @@ const Component: React.FC<Props> = ({ className }) => {
       style={{ 
         backgroundColor: '#050505',
         border: '2px solid #00f0ff', 
-        borderRadius: '0px', // Cyberpunk unika zaokrągleń - wszystko ma być ostre!
+        borderRadius: '0px', 
         marginTop: '20px',
         padding: '25px',
         boxShadow: '0 0 15px rgba(0, 240, 255, 0.3)',
@@ -44,8 +46,6 @@ const Component: React.FC<Props> = ({ className }) => {
       }}
     >
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'center', justifyContent: 'center' }}>
-        
-        {/* Kontener flagi z ramką militarną */}
         <div style={{ 
           border: '2px solid #ff0055', 
           padding: '6px', 
@@ -55,7 +55,6 @@ const Component: React.FC<Props> = ({ className }) => {
           <img src={countryData.flag} alt="matrix-flag" style={{ maxWidth: '160px', height: 'auto', display: 'block' }} />
         </div>
 
-        {/* Czyste, terminalowe wyciąganie parametrów */}
         <div style={{ flex: 1, minWidth: '250px', color: '#fff', fontSize: '1.1rem', textTransform: 'uppercase' }}>
           <div style={{ color: '#fcee0a', fontWeight: 'bold', fontSize: '1.4rem', borderBottom: '1px solid #fcee0a', paddingBottom: '5px', marginBottom: '10px' }}>
             🛰️ TARGET_DATA // {countryData.name}
@@ -63,12 +62,11 @@ const Component: React.FC<Props> = ({ className }) => {
           <p style={{ margin: '5px 0' }}><span style={{ color: '#00f0ff' }}>ZONE_SUBREGION:</span> {countryData.subregion}</p>
           <p style={{ margin: '5px 0' }}><span style={{ color: '#00f0ff' }}>NATIVE_CYPHER:</span> {countryData.nativeName}</p>
           <p style={{ margin: '5px 0' }}><span style={{ color: '#00f0ff' }}>POLITICAL_CORE:</span> {countryData.capital}</p>
-          <p style={{ margin: '5px 0' }}><span style={{ color: '#00f0ff' }}>CREDIT_CURRENCY:</span> {countryData.currencies?.[0]?.name || 'N/A'}</p>
-          <p style={{ margin: '5px 0' }}><span style={{ color: '#00f0ff' }}>LINK_LANGUAGE:</span> {countryData.languages?.[0]?.name || 'N/A'}</p>
+          <p style={{ margin: '5px 0' }}><span style={{ color: '#00f0ff' }}>CREDIT_CURRENCY:</span> {countryData.currencies?.name || 'N/A'}</p>
+          <p style={{ margin: '5px 0' }}><span style={{ color: '#00f0ff' }}>LINK_LANGUAGE:</span> {countryData.languages?.name || 'N/A'}</p>
         </div>
       </div>
       
-      {/* WYŚRODKOWANY, CYBERPUNKOWY PRZYCISK WIKIPEDII */}
       <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
         <button
           onClick={() => {
@@ -90,11 +88,8 @@ const Component: React.FC<Props> = ({ className }) => {
             textTransform: 'uppercase',
             letterSpacing: '2px',
             boxShadow: '0 0 10px #ff0055',
-            transition: 'transform 0.1s',
-            animation: 'cyberPulse 2s infinite'
+            transition: 'transform 0.1s'
           }}
-          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
           NET_MATRIX_SEARCH [WIKIPEDIA]
         </button>

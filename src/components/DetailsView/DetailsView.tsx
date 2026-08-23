@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import styles from './DetailsView.module.scss';
 import Card from '@material-ui/core/Card';
 import { useSelector, useDispatch } from 'react-redux';
-import { Task, fetchDynamicIntel, resetIntelAction, addCoord, importedIntelAction } from '../../redux/actions'; 
+import { Task, resetIntelAction, addCoord, importedIntelAction, RootState } from '../../redux/actions'; 
 import { useParams } from 'react-router-dom';
 import { Map } from '../Map/Map';
 import { useState, useEffect } from 'react';
@@ -18,15 +18,16 @@ interface Params {
 }
 
 const Component: React.FC<Props> = ({ className }) => {
-  const params: Params = useParams();
+  const params = useParams<Params>();
   const dispatch = useDispatch();
   const safePostId = parseInt(params.id, 10);
 
-  const PROD_BACKEND_URL = "https://cyber-map-backend.onrender.com";
-    Axios.get(`${PROD_BACKEND_URL}/posts/${safePostId}`)
+  // UŻYWAMY BEZPIECZNEGO, SZTYWNEGO LINKU CHMUROWEGO
+  const EXACT_CLOUD_URL = "https://onrender.com";
 
-  const currentPost = useSelector((state: any) => {
-    const postsList = state['posts'] || [];
+  // POPRAWKA: Typujemy stan jako RootState, usuwając czerwone podkreślenie filter/length
+  const currentPost = useSelector((state: RootState) => {
+    const postsList = state.posts || [];
     const found = postsList.filter((post: Task) => String(post.id) === String(params.id));
     return found.length > 0 ? found : null;
   });
@@ -110,7 +111,7 @@ const Component: React.FC<Props> = ({ className }) => {
     setDistance('');
     setHasClicked(false);
     dispatch(resetIntelAction());
-    Axios.get(`${PROD_BACKEND_URL}/posts/${safePostId}`)
+    Axios.get(`${EXACT_CLOUD_URL}/posts/${safePostId}`)
       .then((res) => {
         if (res.data) {
           setTaskContent(res.data.content || '');
@@ -125,8 +126,8 @@ const Component: React.FC<Props> = ({ className }) => {
           }
         }
       })
-      .catch((err) => console.log("Nowe zadanie, brak wpisu archiwalnego w bazie Neon SQL:", err));
-  }, [safePostId, PROD_BACKEND_URL]);
+      .catch((err) => console.log("Nowy węzeł taktyczny Neon SQL:", err));
+  }, [safePostId]);
 
   return (
     <Card 
@@ -143,7 +144,6 @@ const Component: React.FC<Props> = ({ className }) => {
         <Map getIntel={getIntel} />
       </div>
       
-      {/* CYBERPUNK HUD DISTANCE COUNTER */}
       <div style={{ padding: '15px 0', display: 'flex', justifyContent: 'center' }}>
         {hasClicked && distance && (
           <div 

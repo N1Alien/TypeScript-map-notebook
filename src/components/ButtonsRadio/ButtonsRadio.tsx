@@ -15,7 +15,7 @@ export const ButtonsRadio: React.FC<Props> = ({ id }) => {
   const dispatch = useDispatch();
   const EXACT_CLOUD_URL = "https://onrender.com";
 
-  // POPRAWKA: Jawnopolowa integracja RootState zabezpiecza przed błędem indeksowania tablicy posts
+  // POPRAWKA: Jawnopolowa integracja RootState zabezpiecza przed błędami VSC
   const currentPost = useSelector((state: RootState) => {
     const postsList = state.posts || [];
     return postsList.find((post: Task) => post.id === id) || null;
@@ -23,7 +23,6 @@ export const ButtonsRadio: React.FC<Props> = ({ id }) => {
 
   const value = currentPost ? currentPost.savedStyle : 'default';
 
-  // POPRAWKA: Jawne otypowanie zdarzenia zmiany i obsługa przesyłania do Axiosa
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newStyle = event.target.value;
     if (currentPost) {
