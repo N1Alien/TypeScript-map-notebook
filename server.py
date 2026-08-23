@@ -7,8 +7,6 @@ import os
 # PANCERNY LINK PRODUKCYJNY DO CHMURY NEON.TECH
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://neondb_owner:npg_2Q0GUXmTAFiW@ep-flat-field-b1lb26u8-pooler.c-5.eu-central-1.aws.neon.tech/neondb?sslmode=require")
 
-NEON_HOST = "ep-flat-field-b1lb26u8.eu-central-1.aws.neon.tech"
-
 def execute_sql(sql_query):
     """Profesjonalny łącznik HTTP Serverless z chmurą Neon.tech SQL"""
     direct_api_url = "https://neon.tech" 
@@ -71,13 +69,12 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
                     }
                     output.append(item)
                 
-                self.send_response(200)
                 self.wfile.write(json.dumps(output).encode('utf-8'))
             except Exception as e:
                 self.wfile.write(json.dumps([{"id": 180, "content": f"Baza Neon startuje..."}]).encode('utf-8'))
             return
 
-        # 2. Endpoint: ODTWARZANIE DANYCH - Pobranie JEDNEGO konkretnego posta na żywo z chmury Neon SQL!
+        # 2. Endpoint: ODTWARZANIE DANYCH - Pobranie JEDNEGO konkretnego posta
         if self.path.startswith('/posts/'):
             try:
                 post_id = int(self.path.split('/')[-1])
@@ -93,7 +90,7 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
                     }
                     self.wfile.write(json.dumps(output).encode('utf-8'))
                 else:
-                    self.wfile.write(json.dumps({"id": post_id, "content": "New Task"}).encode('utf-8'))
+                    self.wfile.write(json.dumps({"id": post_id, "content": "New Task", "savedStyle": "default"}).encode('utf-8'))
             except Exception as e:
                 self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
             return
@@ -116,8 +113,8 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
             body = json.loads(self.rfile.read(content_length).decode('utf-8'))
             
             p_id = body.get('id', 1)
-            p_content = body.get('content', 'New Idea')
-            p_style = body.get('savedStyle', 'default')
+            p_content = body.get('content', 'New Idea').replace("'", "''")
+            p_style = body.get('savedStyle', 'default').replace("'", "''")
 
             execute_sql(f"INSERT INTO posts (id, content, saved_style) VALUES ({p_id}, '{p_content}', '{p_style}') ON CONFLICT (id) DO NOTHING;")
             
@@ -134,8 +131,9 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
             content_length = int(self.headers['Content-Length'])
             body = json.loads(self.rfile.read(content_length).decode('utf-8'))
             
-            p_content = body.get('content', 'Updated')
-            p_style = body.get('savedStyle', 'default')
+            # POPRAWKA BEZPIECZEŃSTWA: Podwajamy znaki apostrofów, chroniąc kwerendę przed wywaleniem
+            p_content = body.get('content', 'Updated').replace("'", "''")
+            p_style = body.get('savedStyle', 'default').replace("'", "''")
             
             p_lat = "NULL"
             p_lng = "NULL"
@@ -143,10 +141,13 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
                 p_lat = str(body['coord']['lat'])
                 p_lng = str(body['coord']['lng'])
                 
-            p_dist = body.get('distance', '')
-            p_intel = json.dumps(body.get('savedIntel', '')) if body.get('savedIntel') else ''
+            p_dist = body.get('distance', '').replace("'", "''")
+            
+            p_intel = ""
+            if body.get('savedIntel'):
+                p_intel = json.dumps(body.get('savedIntel')).replace("'", "''")
 
-            # Aktualizujemy rekord w chmurze Neon SQL na żywo!
+            # Aktualizujemy rekord w chmurze Neon SQL bez błędów składniowych!
             sql = f"UPDATE posts SET content='{p_content}', saved_style='{p_style}', lat={p_lat}, lng={p_lng}, distance='{p_dist}', saved_intel='{p_intel}' WHERE id={post_id};"
             execute_sql(sql)
 
