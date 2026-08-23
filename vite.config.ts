@@ -3,8 +3,12 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  server: {
-    port: 8000,
-    open: true
-  }
+  css: {
+    preprocessorOptions: {
+      scss: {
+        // Ta flaga wyłącza ostrzeżenia o @import i czyści logi Rendera
+        silenceDeprecations: ['import', 'global-builtin'],
+      },
+    },
+  },
 });
