@@ -16,10 +16,11 @@ export interface Currencies {
   mid: number;
 }
 
-// DEFINICJA GLOBALNEGO STANU REDUX (LKWIDUJE BŁĘDY USESELECTOR)
+// DEFINICJA GLOBALNEGO STANU REDUX
 export interface RootState {
   posts: Task[];
   intel: any;
+  currencies?: Currencies[];
 }
 
 export const IMPORTED_POSTS = 'IMPORTED_POSTS';
@@ -99,7 +100,7 @@ export const resetIntelAction = (): PostActionsTypes => ({
   type: RESET_INTEL,
 });
 
-// POPRAWIONE FUNKCJE THUNK - JAWNE TYPOWANIE DISPATCH
+// ASYNCHRONICZNE AKCJE REDUX-THUNK ZSYNCHRONIZOWANE Z NEON SQL
 export const fetchPosts = () => {
   return (dispatch: (arg: PostActionsTypes) => void) => {
     Axios.get(`${EXACT_CLOUD_URL}/posts`)
@@ -143,3 +144,10 @@ export const addCoord = (id: number, content: string, coord: { lat: number; lng:
       .catch((err) => console.error("❌ Błąd aktualizacji współrzędnych w chmurze:", err));
   };
 };
+
+// ============================================================================
+// OSTATECZNE ALIAS_TYPY: Naprawa brakujących eksportów dla Twoich reduktorów!
+// ============================================================================
+export type PostActions = PostActionsTypes;
+export type IntelActions = PostActionsTypes;
+export type CurrenciesActions = any; 
