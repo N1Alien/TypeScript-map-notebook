@@ -5,36 +5,21 @@
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
-    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"> 
     <meta name="description" content="Cyber-Deck Terminal Interface" />
-    
-    <!-- Oficjalna cyberpunkowa czcionka z Cyberpunka 2077 -->
-    <link rel="stylesheet" href="https://googleapis.com" />
-
-    <!-- Style mapy Leaflet -->
-    <link rel="stylesheet" href="https://unpkg.com" />
-    <script src="https://unpkg.com"></script>
-
     <title>CYBER_DECK // OS_v2.077</title>
-
     <style>
-      /* Globalny reset interfejsu na styl Night City */
       body, html, #root {
         margin: 0;
         padding: 0;
         background-color: #000000 !important;
         color: #fcee0a !important;
-        font-family: 'Share Tech Mono', monospace !important;
-        overflow-x: hidden;
+        font-family: monospace !important;
       }
-      
-      /* Animacja mrugania awaryjnego dla paneli HUD */
       @keyframes cyberPulse {
         0% { opacity: 0.8; box-shadow: 0 0 4px #ff0055; }
         50% { opacity: 1; box-shadow: 0 0 16px #ff0055; }
         100% { opacity: 0.8; box-shadow: 0 0 4px #ff0055; }
       }
-
       @keyframes neonGlow {
         0% { border-color: #00f0ff; box-shadow: 0 0 5px #00f0ff; }
         50% { border-color: #fcee0a; box-shadow: 0 0 15px #fcee0a; }

@@ -1,6 +1,5 @@
 import Axios from 'axios';
 
-// PRECYZYJNA DEFINICJA STRUKTURY DANYCH DLA TYPESCRIPT
 export interface Task {
   id: number;
   content: string;
@@ -16,7 +15,6 @@ export interface Currencies {
   mid: number;
 }
 
-// DEFINICJA GLOBALNEGO STANU REDUX
 export interface RootState {
   posts: Task[];
   intel: any;
@@ -68,7 +66,7 @@ export type PostActionsTypes =
   | ImportedIntelAction 
   | ResetIntelAction;
 
-// PANCERNY LINK DO TWOJEGO BACKENDU - BEZ UKOŚNIKA NA KOŃCU!
+// JAWNY, PANCERNY ADRES SUBDOMENY ZAPOBIEGA PRZEKIEROWANIOM 301
 const EXACT_CLOUD_URL = "https://onrender.com";
 
 export const importedPostsAction = (posts: Task[]): PostActionsTypes => ({
@@ -101,45 +99,38 @@ export const resetIntelAction = (): PostActionsTypes => ({
   type: RESET_INTEL,
 });
 
-// W pliku actions.ts zmień funkcje sieciowe na czyste podkatalogi:
-
 export const fetchPosts = () => {
   return (dispatch: (arg: PostActionsTypes) => void) => {
-    // Czyste /posts zamiast pełnego adresu URL
-    Axios.get('/posts')
+    Axios.get(`${EXACT_CLOUD_URL}/posts`)
       .then((res) => {
         if (res.data) {
           dispatch(importedPostsAction(res.data as Task[]));
         }
       })
-      .catch((err) => console.error("❌ Błąd:", err));
+      .catch((err) => console.error("❌ Błąd pobierania postów z chmury Neon:", err));
   };
 };
 
 export const removePost = (id: number) => {
   return (dispatch: (arg: PostActionsTypes) => void) => {
-    Axios.delete(`/posts/${id}`)
+    Axios.delete(`${EXACT_CLOUD_URL}/posts/${id}`)
       .then(() => dispatch(removePostAction(id)))
-      .catch((err) => console.error(err));
+      .catch((err) => console.error("❌ Błąd usuwania z chmury:", err));
   };
 };
 
 export const addPost = (id: number, content: string, savedStyle: string = "default") => {
   return (dispatch: (arg: PostActionsTypes) => void) => {
-    // Wysyłamy czysty payload do server.py na porcie 5000 (chmura Render)
-    Axios.post('https://onrender.com', { 
+    Axios.post(`${EXACT_CLOUD_URL}/posts`, { 
+      id, 
       content, 
-      savedStyle 
+      savedStyle, 
+      coord: null, 
+      distance: "", 
+      savedIntel: null 
     })
       .then(() => {
-        console.log("📥 [NEON SQL] Wstrzyknięto rekord pomyślnie! Pobieram nową matrycę...");
-        // Twarde wymuszenie zaciągnięcia świeżych danych z bazy online
-        Axios.get('https://onrender.com')
-          .then((res) => {
-            if (res.data) {
-              dispatch(importedPostsAction(res.data as Task[]));
-            }
-          });
+        dispatch(fetchPosts() as any);
       })
       .catch((err) => console.error("❌ Błąd dodawania do chmury:", err));
   };
@@ -148,14 +139,12 @@ export const addPost = (id: number, content: string, savedStyle: string = "defau
 export const addCoord = (id: number, content: string, coord: { lat: number; lng: number }, distance: string, savedIntel: any) => {
   return (dispatch: (arg: PostActionsTypes) => void) => {
     const updatedTask: Task = { id, content, savedStyle: "default", coord, distance, savedIntel };
-    Axios.put(`/posts/${id}`, updatedTask)
+    Axios.put(`${EXACT_CLOUD_URL}/posts/${id}`, updatedTask)
       .then(() => dispatch(editPostAction(updatedTask)))
-      .catch((err) => console.error(err));
+      .catch((err) => console.error("❌ Błąd aktualizacji współrzędnych w chmurze:", err));
   };
 };
 
-
-// Puste placeholdery, które trwale gaszą błędy [MISSING_EXPORT] w Vite/Rolldown
 export const PostActions = {};
 export const IntelActions = {};
 export const CurrenciesActions = {};
