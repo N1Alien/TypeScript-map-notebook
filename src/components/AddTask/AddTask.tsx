@@ -3,11 +3,6 @@ import clsx from 'clsx';
 import { useDispatch } from 'react-redux';
 import { addPost } from '../../redux/actions';
 import styles from './AddTask.module.scss';
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
 
 interface Props {
   className?: string;
@@ -18,79 +13,71 @@ const AddTask: React.FC<Props> = ({ className }) => {
   const [content, setContent] = useState('');
   const dispatch = useDispatch();
 
-  const handleClickOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-    setContent('');
-  };
-
   const updateNote = (event: ChangeEvent<HTMLInputElement>) => {
     setContent(event.target.value);
   };
 
-  const onAddNoteClick = () => {
-    const id = Math.floor(Math.random() * (1000 - 1)) + 1;
-    // POPRAWKA: Rzutowanie na any usuwa błąd asynchronicznej sygnatury Thunk w dispatch
-    dispatch(addPost(id, content, "default") as any);
+  const onAddNoteClick = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!content.trim()) return;
+    
+    const randomId = Math.floor(Math.random() * 1000) + 1;
+    // Rzutujemy na any, aby Thunk przeszedł bez ograniczeń sprawdzania typów Strict
+    dispatch(addPost(randomId, content, "default") as any);
+    
     setContent('');
     setOpen(false);
   };
 
   return (
-    <div className={clsx(className, styles.root)} style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', position: 'relative', zIndex: 10 }}>
-      <button 
-        onClick={handleClickOpen}
-        style={{
-          background: '#fcee0a',
-          color: '#000000',
-          fontFamily: "'Share Tech Mono', monospace",
-          fontSize: '1.2rem',
-          fontWeight: 'bold',
-          padding: '12px 35px',
-          border: 'none',
-          cursor: 'pointer',
-          textTransform: 'uppercase',
-          letterSpacing: '2px',
-          boxShadow: '0 0 15px rgba(252, 238, 10, 0.4)',
-          borderLeft: '5px solid #ff0055'
-        }}
-      >
-        [ + INITIALIZE_NEW_GRID_NODE ]
-      </button>
-
-      {/* POPRAWKA: disableEnforceFocus ucisza błąd aria-hidden w silnikach TypeScript */}
-      <Dialog 
-        open={open} 
-        onClose={handleClose} 
-        disableEnforceFocus
-        aria-labelledby="form-dialog-title"
-        PaperProps={{
-          style: {
+    <div className={clsx(className, styles.root)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '30px', position: 'relative', zIndex: 100 }}>
+      
+      {/* GLÓWNY PRZYCISK TERMINALA NETWATCH */}
+      {!open ? (
+        <button 
+          onClick={() => setOpen(true)}
+          style={{
+            background: '#fcee0a',
+            color: '#000000',
+            fontFamily: "'Share Tech Mono', monospace",
+            fontSize: '1.2rem',
+            fontWeight: 'bold',
+            padding: '12px 35px',
+            border: 'none',
+            cursor: 'pointer',
+            textTransform: 'uppercase',
+            letterSpacing: '2px',
+            boxShadow: '0 0 15px rgba(252, 238, 10, 0.4)',
+            borderLeft: '5px solid #ff0055'
+          }}
+        >
+          [ + INITIALIZE_NEW_GRID_NODE ]
+        </button>
+      ) : (
+        /* PANCERNY FORMULARZ TERMINALOWY - ZERO UKRYTYCH STRZAŁÓW DO GOOGLE */
+        <form 
+          onSubmit={onAddNoteClick}
+          style={{
             backgroundColor: '#050505',
             border: '2px solid #00f0ff',
-            borderRadius: '0px',
+            padding: '25px',
             boxShadow: '0 0 25px #00f0ff',
-            padding: '15px',
+            width: '100%',
+            maxWidth: '500px',
+            boxSizing: 'border-box',
             fontFamily: "'Share Tech Mono', monospace"
-          }
-        }}
-      >
-        <DialogTitle id="form-dialog-title" disableTypography>
-          <h2 style={{ color: '#fcee0a', margin: 0, textTransform: 'uppercase', letterSpacing: '2px', fontSize: '1.5rem', borderBottom: '1px solid #fcee0a', paddingBottom: '5px' }}>
+          }}
+        >
+          <h2 style={{ color: '#fcee0a', margin: '0 0 15px 0', textTransform: 'uppercase', letterSpacing: '2px', fontSize: '1.4rem', borderBottom: '1px solid #fcee0a', paddingBottom: '5px' }}>
             // COGNITIVE_INJECTION_INTERFACE
           </h2>
-        </DialogTitle>
-        
-        <DialogContent style={{ marginTop: '10px' }}>
-          <DialogContentText style={{ color: '#fff', fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            "A journey of a thousand miles begins with a single network handshake."
-          </DialogContentText>
           
-          <div style={{ marginTop: '15px' }}>
-            <label style={{ display: 'block', color: '#00f0ff', marginBottom: '5px', textTransform: 'uppercase' }}>
+          <p style={{ color: '#fff', fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 15px 0', lineHeight: '1.4' }}>
+            "A journey of a thousand miles begins with a single network handshake."
+          </p>
+          
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', color: '#00f0ff', marginBottom: '8px', textTransform: 'uppercase', fontSize: '0.9rem' }}>
               INPUT_TARGET_IDEA_DATA:
             </label>
             <input
@@ -98,6 +85,7 @@ const AddTask: React.FC<Props> = ({ className }) => {
               onChange={updateNote}
               value={content}
               placeholder="Inject string to the mainframe..."
+              autoFocus
               style={{
                 width: '100%',
                 boxSizing: 'border-box',
@@ -106,48 +94,51 @@ const AddTask: React.FC<Props> = ({ className }) => {
                 color: '#fff',
                 fontFamily: "'Share Tech Mono', monospace",
                 fontSize: '1.1rem',
-                padding: '10px',
+                padding: '12px',
                 outline: 'none'
               }}
             />
           </div>
-        </DialogContent>
-        
-        <DialogActions style={{ justifyContent: 'space-between', marginTop: '15px', padding: '0 15px' }}>
-          <button 
-            onClick={handleClose}
-            style={{
-              background: '#000',
-              color: '#ff0055',
-              border: '1px solid #ff0055',
-              fontFamily: "'Share Tech Mono', monospace",
-              fontSize: '1rem',
-              fontWeight: 'bold',
-              padding: '6px 18px',
-              cursor: 'pointer',
-              textTransform: 'uppercase'
-            }}
-          >
-            [ ABORT ]
-          </button>
-          <button 
-            onClick={onAddNoteClick}
-            style={{
-              background: '#00f0ff',
-              color: '#000',
-              border: 'none',
-              fontFamily: "'Share Tech Mono', monospace",
-              fontSize: '1rem',
-              fontWeight: 'bold',
-              padding: '6px 22px',
-              cursor: 'pointer',
-              textTransform: 'uppercase'
-            }}
-          >
-            [ EXECUTE_INJECTION ]
-          </button>
-        </DialogActions>
-      </Dialog>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <button 
+              type="button"
+              onClick={() => { setOpen(false); setContent(''); }}
+              style={{
+                background: '#000',
+                color: '#ff0055',
+                border: '1px solid #ff0055',
+                fontFamily: "'Share Tech Mono', monospace",
+                fontSize: '1rem',
+                fontWeight: 'bold',
+                padding: '8px 20px',
+                cursor: 'pointer',
+                textTransform: 'uppercase'
+              }}
+            >
+              [ ABORT ]
+            </button>
+            
+            <button 
+              type="submit"
+              style={{
+                background: '#00f0ff',
+                color: '#000',
+                border: 'none',
+                fontFamily: "'Share Tech Mono', monospace",
+                fontSize: '1rem',
+                fontWeight: 'bold',
+                padding: '8px 24px',
+                cursor: 'pointer',
+                textTransform: 'uppercase',
+                boxShadow: '0 0 10px rgba(0, 240, 255, 0.4)'
+              }}
+            >
+              [ EXECUTE_INJECTION ]
+            </button>
+          </div>
+        </form>
+      )}
     </div>
   );
 };

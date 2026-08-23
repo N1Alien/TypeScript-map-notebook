@@ -126,15 +126,20 @@ export const removePost = (id: number) => {
 
 export const addPost = (id: number, content: string, savedStyle: string = "default") => {
   return (dispatch: (arg: PostActionsTypes) => void) => {
-    // Pomijamy wysyłanie ID w body, pozwalamy nowemu server.py na nadanie idealnego numeru kolejnego!
-    Axios.post('/posts', { 
+    // Wysyłamy czysty payload do server.py na porcie 5000 (chmura Render)
+    Axios.post('https://onrender.com', { 
       content, 
       savedStyle 
     })
       .then(() => {
-        // Po udanym wstrzyknięciu natychmiastowo pobieramy świeżą listę z chmury Neon SQL,
-        // co od razu wyrenderuje jaskrawożółtą cyberpunkową kartę na ekranie!
-        dispatch(fetchPosts() as any);
+        console.log("📥 [NEON SQL] Wstrzyknięto rekord pomyślnie! Pobieram nową matrycę...");
+        // Twarde wymuszenie zaciągnięcia świeżych danych z bazy online
+        Axios.get('https://onrender.com')
+          .then((res) => {
+            if (res.data) {
+              dispatch(importedPostsAction(res.data as Task[]));
+            }
+          });
       })
       .catch((err) => console.error("❌ Błąd dodawania do chmury:", err));
   };
