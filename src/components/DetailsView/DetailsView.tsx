@@ -23,6 +23,7 @@ const Component: React.FC<Props> = ({ className }) => {
   const safePostId = parseInt(params.id, 10);
 
   const PROD_BACKEND_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "");
+    Axios.get(`${PROD_BACKEND_URL}/posts/${safePostId}`)
 
   const currentPost = useSelector((state: any) => {
     const postsList = state['posts'] || [];

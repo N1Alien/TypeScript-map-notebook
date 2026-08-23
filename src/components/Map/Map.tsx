@@ -36,6 +36,7 @@ const Component: React.FC<Props> = ({ className, getIntel }) => {
   const safeId = parseInt(params.id || '0', 10);
   const [savedPostData, setSavedPostData] = useState<any>(null);
   const PROD_BACKEND_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "");
+    Axios.get(`${PROD_BACKEND_URL}/posts/${safeId}`)
 
   useEffect(() => {
     Axios.get(`${PROD_BACKEND_URL}/posts/${safeId}`)
