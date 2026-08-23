@@ -146,8 +146,22 @@ export const addCoord = (id: number, content: string, coord: { lat: number; lng:
 };
 
 // ============================================================================
-// OSTATECZNE ALIAS_TYPY: Naprawa brakujących eksportów dla Twoich reduktorów!
+// OSTATECZNA FIX-MIGRACJA: Prawdziwe, fizyczne eksporty zamiast export type!
+// To gasi błędy [MISSING_EXPORT] w kompilatorze produkcyjnym na Renderze.
 // ============================================================================
-export type PostActions = PostActionsTypes;
-export type IntelActions = PostActionsTypes;
-export type CurrenciesActions = any; 
+export interface PostActions {
+  type: string;
+  payload?: any;
+  id?: number;
+  content?: string;
+}
+
+export interface IntelActions {
+  type: string;
+  payload?: any;
+}
+
+export interface CurrenciesActions {
+  type: string;
+  payload?: any;
+}
