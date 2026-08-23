@@ -124,27 +124,21 @@ export const removePost = (id: number) => {
   };
 };
 
-
-// Znajdź asynchroniczną funkcję addPost na dole pliku i upewnij się, że przesyła czyste parametry:
 export const addPost = (id: number, content: string, savedStyle: string = "default") => {
   return (dispatch: (arg: PostActionsTypes) => void) => {
+    // Pomijamy wysyłanie ID w body, pozwalamy nowemu server.py na nadanie idealnego numeru kolejnego!
     Axios.post('/posts', { 
-      id, 
       content, 
-      savedStyle, 
-      coord: null, 
-      distance: "", 
-      savedIntel: null 
+      savedStyle 
     })
       .then(() => {
-        // Po udanym zapisie w Neon SQL, natychmiast wymuszamy odświeżenie całej listy z chmury!
-        // To daje 100% gwarancji, że nowa karta z czcionkami od razu pojawi się na Twoim ekranie!
+        // Po udanym wstrzyknięciu natychmiastowo pobieramy świeżą listę z chmury Neon SQL,
+        // co od razu wyrenderuje jaskrawożółtą cyberpunkową kartę na ekranie!
         dispatch(fetchPosts() as any);
       })
-      .catch((err) => console.error("❌ Błąd dodawania zadania do chmury:", err));
+      .catch((err) => console.error("❌ Błąd dodawania do chmury:", err));
   };
 };
-
 
 export const addCoord = (id: number, content: string, coord: { lat: number; lng: number }, distance: string, savedIntel: any) => {
   return (dispatch: (arg: PostActionsTypes) => void) => {
