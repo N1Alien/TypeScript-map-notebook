@@ -1,7 +1,7 @@
 import Axios from 'axios';
 // PRODUKCYJNA REWOLUCJA: Pobieramy adres serwera Pythona ze zmiennej chmurowej,
 // a jeśli odpalamy aplikację lokalnie na komputerze – automatycznie wracamy do portu 5000!
-const PROD_BACKEND_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "");
+// const PROD_BACKEND_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "");
 
 
 export enum PostActions {
@@ -139,30 +139,47 @@ export const fetchDynamicIntel = (rawBdcData: any) => {
 };
 
 
+// OSTAECZNY ADRES PRODUKCYJNY TWOJEGO BACKENDU NA RENDERZE
+const PROD_BACKEND_URL = "https://onrender.com";
+
 export const fetchPosts = () => {
   return (dispatch: (arg0: PostActionsTypes) => void) => {
-    Axios.get<Task[]>(`http://localhost:4000/posts`)
-      .then((res) => dispatch(importedPostsAction(res.data)))
-      .catch((err) => console.log(err));
+    // ZMIANA: localhost:4000/posts zamieniamy na bezpieczny adres chmurowy!
+    Axios.get(`${PROD_BACKEND_URL}/posts`)
+      .then((res) => {
+        if (res.data) {
+          dispatch(importedPostsAction(res.data));
+        }
+      })
+      .catch((err) => console.error("❌ Błąd pobierania postów z chmury:", err));
   };
 };
 
 export const removePost = (id: number) => {
   return (dispatch: (arg0: PostActionsTypes) => void) => {
-    Axios.delete(`http://localhost:4000/posts/${id}`)
+    // ZMIANA: Bezpieczne usuwanie rekordu bezpośrednio z chmury Neon SQL
+    Axios.delete(`${PROD_BACKEND_URL}/posts/${id}`)
       .then(() => dispatch(removePostAction(id)))
-      .catch((err) => console.log(err));
+      .catch((err) => console.error("❌ Błąd usuwania z chmury:", err));
   };
 };
 
-/* POPRAWKA: Akcja addPost przyjmuje i wysyła do json-server bazowy styl karty */
 export const addPost = (id: number, content: string, savedStyle: string = "default") => {
   return (dispatch: (arg0: PostActionsTypes) => void) => {
-    Axios.post(`http://localhost:4000/posts/`, { id, content, savedStyle, coord: null, distance: "", savedIntel: null })
+    // ZMIANA: Dodawanie nowego, żółtego kafelka z czystym tekstem prosto do bazy online
+    Axios.post(`${PROD_BACKEND_URL}/posts`, { 
+      id, 
+      content, 
+      savedStyle, 
+      coord: null, 
+      distance: "", 
+      savedIntel: null 
+    })
       .then(() => dispatch(addPostAction(id, content)))
-      .catch((err) => console.log("❌ Błąd dodawania zadania w json-server:", err));
+      .catch((err) => console.error("❌ Błąd dodawania do chmury:", err));
   };
 };
+
 
 
 /* POPRAWKA: Rozszerzona funkcja addCoord zapisuje współrzędne, dystans oraz dane Intel bezpośrednio w db.json */
@@ -184,68 +201,3 @@ export const addCoord = (id: number, content: string, coord: Coord, distance?: s
   };
 };
 
-/* POPRAWKA NBP: Pobieranie tabeli walut A z bezwzględną blokadą pamięci Cache (Status 200 OK) */
-export const fetchCurrencies = () => {
-  return (dispatch: (arg0: CurrenciesActionsTypes) => void) => {
-    const s = String.fromCharCode(47); // Znak ukośnika: /
-
-    // Budujemy pełny, poprawny i oficjalny adres tabeli walut A Narodowego Banku Polskiego
-    const urlKonstruktor = new URL("https://nbp.pl");
-    urlKonstruktor.pathname = "api" + s + "exchangerates" + s + "tables" + s + "a" + s;
-    
-    // Dodajemy losowy znacznik czasu (timestamp), aby oszukać pamięć podręczną przeglądarki i wybić status 304!
-    urlKonstruktor.searchParams.set("_t", String(Date.now()));
-
-    const finalUrl = urlKonstruktor.toString();
-    console.log("📡 [NBP LIVE] Pobieram świeżą tabelę walut z: " + finalUrl);
-
-    Axios.get(finalUrl, {
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      }
-    })
-      .then((res) => {
-        // Sprawdzamy czy struktura banku centralnego zwróciła właściwą tablicę obiektów rates
-        if (res.data && res.data[0] && res.data[0].rates) {
-          console.log("📥 [NBP LIVE] Tabela walut pobrana pomyślnie ze statusem 200 OK!");
-          dispatch(importedCurrenciesAction(res.data[0].rates));
-        }
-      })
-      .catch((err) => console.error("❌ Błąd pobierania tabeli NBP:", err.message || err));
-  };
-};
-
-/* POPRAWKA NBP: Pobieranie historii 20 notowań z bezwzględną blokadą pamięci Cache (Status 200 OK) */
-export const fetchSingleCoin = (code: string) => {
-  return (dispatch: (arg0: CurrenciesActionsTypes) => void) => {
-    const cleanCode = code.toLowerCase().trim();
-    const s = String.fromCharCode(47); // Znak ukośnika: /
-
-    // Budujemy pełny, poprawny i oficjalny adres historii 20 notowań
-    const urlKonstruktor = new URL("https://nbp.pl");
-    urlKonstruktor.pathname = "api" + s + "exchangerates" + s + "rates" + s + "a" + s + cleanCode + s + "last" + s + "20" + s;
-    
-    urlKonstruktor.searchParams.set("format", "json");
-    urlKonstruktor.searchParams.set("_t", String(Date.now())); // Blokada cache dla pojedynczej waluty
-
-    const finalUrl = urlKonstruktor.toString();
-    console.log(`📡 [NBP LIVE] Pobieram świeżą historię 20 kwotowań dla ${cleanCode.toUpperCase()} z: ${finalUrl}`);
-
-    Axios.get(finalUrl, {
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      }
-    })
-      .then((res) => {
-        if (res.data && res.data.rates) {
-          console.log(`📥 [NBP LIVE] Historia dla ${cleanCode.toUpperCase()} załadowana (200 OK)!`);
-          dispatch(fetchSingleCoinAction(res.data.rates));
-        }
-      })
-      .catch((error) => console.error(`❌ Błąd pobierania historii waluty ${code.toUpperCase()}:`, error.message || error));
-  };
-};
