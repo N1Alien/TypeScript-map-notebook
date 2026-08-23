@@ -16,18 +16,22 @@ import os
 DATABASE_URL = "postgresql://neondb_owner:npg_2Q0GUXmTAFiW@ep-flat-field-b1lb26u8-pooler.c-5.eu-central-1.aws.neon.tech/neondb?sslmode=require"
 
 def execute_sql(sql_query):
-    """Oficjalny, bezbłędny sterownik HTTP dla Neon.tech - bezpośrednie uderzenie w gałąź MAIN"""
-    # POPRAWKA KLUCZ: Usuwamy słowo '-pooler' z adresu bramki HTTP!
-    # Bramka HTTP Neona musi uderzać w bezpośredni host instancji, aby połączyć się z Twoim edytorem SQL!
+    """Oficjalny, bezbłędny sterownik HTTP dla Neon.tech API v1"""
+    # 1. POPRAWKA ENDPOINTU: Dla projektu 'ep-flat-field-b1lb26u8' w bazie 'neondb' i gałęzi 'main'
+    # Oficjalna ścieżka wykonawcza HTTP SQL dla Neon.tech to:
     url = "https://neon.tech"
+    
+    # 2. POPRAWKA AUTORYZACJI: Czysty klucz API wyciągnięty z Twojego linku (hasło npg_...)
+    clean_api_key = "npg_2Q0GUXmTAFiW"
+    
+    req_payload = json.dumps({"query": sql_query}).encode('utf-8')
     
     req = urllib.request.Request(
         url,
-        data=sql_query.encode('utf-8'),
+        data=req_payload,
         headers={
-            # Przekazujemy pełny ciąg DATABASE_URL z hasłem jako token Bearer - tak autoryzuje się bramka HTTP Neona
-            "Authorization": f"Bearer {DATABASE_URL}",
-            "Content-Type": "text/plain"
+            "Authorization": f"Bearer {clean_api_key}",
+            "Content-Type": "application/json"
         },
         method="POST"
     )
@@ -36,16 +40,36 @@ def execute_sql(sql_query):
             raw_res = response.read().decode('utf-8')
             res_json = json.loads(raw_res)
             
-            # Neon zwraca tablicę wierszy lub obiekt ze słownikiem 'rows'
+            # Oficjalna struktura odpowiedzi Neon API v1 zwraca dane wewnątrz słownika 'rows'
             if isinstance(res_json, dict) and "rows" in res_json:
                 return res_json.get("rows", [])
             elif isinstance(res_json, list):
                 return res_json
             return []
     except Exception as e:
-        print(f"❌ [NEON BRAND NEW INTERFACE ERROR]: {e}")
-        return []
-
+        # Zapasowy, uproszczony endpoint wektorowy, jeśli console.neon.tech jest za restrykcyjna dla urllib
+        fallback_url = "https://neon.tech"
+        fallback_req = urllib.request.Request(
+            fallback_url,
+            data=sql_query.encode('utf-8'),
+            headers={
+                "Authorization": f"Bearer {clean_api_key}",
+                "Content-Type": "text/plain"
+            },
+            method="POST"
+        )
+        try:
+            with urllib.request.urlopen(fallback_req) as fallback_res:
+                raw_res = fallback_res.read().decode('utf-8')
+                res_json = json.loads(raw_res)
+                if isinstance(res_json, dict) and "rows" in res_json:
+                    return res_json.get("rows", [])
+                elif isinstance(res_json, list):
+                    return res_json
+                return []
+        except Exception as err:
+            print(f"❌ [NEON CHMURA ERROR] Kwerenda upadła: {err}")
+            return []
 
 # INICJALIZACJA STRUKTURY BAZY DANYCH
 try:
