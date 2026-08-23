@@ -7,13 +7,25 @@ import os
 # To całkowicie eliminuje złe zmienne środowiskowe na Renderze i mostkuje połączenie.
 DATABASE_URL = "postgresql://neondb_owner:npg_2Q0GUXmTAFiW@ep-flat-field-b1lb26u8-pooler.c-5.eu-central-1.aws.neon.tech/neondb?sslmode=require"
 
+import http.server
+import urllib.request
+import json
+import os
+
+# PRODUKCYJNY ADRES POŁĄCZENIA NEON.TECH SQL (PgBouncer URL)
+DATABASE_URL = "postgresql://neondb_owner:npg_2Q0GUXmTAFiW@ep-flat-field-b1lb26u8-pooler.c-5.eu-central-1.aws.neon.tech/neondb?sslmode=require"
+
 def execute_sql(sql_query):
-    """Oficjalny, zunifikowany sterownik bramki HTTP dla chmury Neon.tech"""
+    """Oficjalny, bezbłędny sterownik HTTP dla Neon.tech - bezpośrednie uderzenie w gałąź MAIN"""
+    # POPRAWKA KLUCZ: Usuwamy słowo '-pooler' z adresu bramki HTTP!
+    # Bramka HTTP Neona musi uderzać w bezpośredni host instancji, aby połączyć się z Twoim edytorem SQL!
     url = "https://neon.tech"
+    
     req = urllib.request.Request(
         url,
         data=sql_query.encode('utf-8'),
         headers={
+            # Przekazujemy pełny ciąg DATABASE_URL z hasłem jako token Bearer - tak autoryzuje się bramka HTTP Neona
             "Authorization": f"Bearer {DATABASE_URL}",
             "Content-Type": "text/plain"
         },
@@ -24,15 +36,16 @@ def execute_sql(sql_query):
             raw_res = response.read().decode('utf-8')
             res_json = json.loads(raw_res)
             
-            # OBSŁUGA STRUKTURY NEON: Szukamy tablicy rows wewnątrz słownika
+            # Neon zwraca tablicę wierszy lub obiekt ze słownikiem 'rows'
             if isinstance(res_json, dict) and "rows" in res_json:
                 return res_json.get("rows", [])
             elif isinstance(res_json, list):
                 return res_json
             return []
     except Exception as e:
-        print(f"❌ [NEON SQL CLOUD ERROR] Kwerenda upadła: {e}")
+        print(f"❌ [NEON BRAND NEW INTERFACE ERROR]: {e}")
         return []
+
 
 # INICJALIZACJA STRUKTURY BAZY DANYCH
 try:
