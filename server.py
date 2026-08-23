@@ -3,12 +3,11 @@ import urllib.request
 import json
 import os
 
-# PANCERNY LINK PRODUKCYJNY DO CHMURY NEON.TECH
+# PRODUKCYJNY ADRES POŁĄCZENIA NEON.TECH SQL
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://neondb_owner:npg_2Q0GUXmTAFiW@ep-flat-field-b1lb26u8-pooler.c-5.eu-central-1.aws.neon.tech/neondb?sslmode=require")
 
 def execute_sql(sql_query):
-    """Oficjalny, bezbłędny sterownik serverless HTTP dla chmury Neon SQL"""
-    # Korzystamy z dedykowanego, bezpiecznego bramki SQL gateway dostarczanej przez Neon w regionie eu-central-1
+    """Pancerny, oficjalny sterownik HTTP gateway dla chmury Neon.tech SQL"""
     url = "https://neon.tech"
     
     req = urllib.request.Request(
@@ -23,12 +22,17 @@ def execute_sql(sql_query):
     try:
         with urllib.request.urlopen(req) as response:
             raw_res = response.read().decode('utf-8')
-            return json.loads(raw_res)
+            res_json = json.loads(raw_res)
+            
+            # Bezpieczna normalizacja wyniku bez względu na to, czy Neon zwraca strukturę słownikową czy tablicową
+            if isinstance(res_json, dict) and "rows" in res_json:
+                return res_json
+            return {"rows": res_json if isinstance(res_json, list) else []}
     except Exception as e:
-        print(f"❌ [NEON CHMURA ERROR] Kwerenda upadła: {e}")
+        print(f"❌ [NEON SQL CLOUD ERROR] Kwerenda upadła: {e}")
         return {"rows": []}
 
-# AUTO-INICJALIZACJA BAZY W CHMURZE AWS
+# INICJALIZACJA STRUKTURY BAZY DANYCH W CHMURZE AWS
 try:
     execute_sql("""
     CREATE TABLE IF NOT EXISTS posts (
@@ -59,7 +63,7 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
 
-        # 1. Pobranie wszystkich rekordów
+        # 1. Endpoint: Pobranie wszystkich postów z chmury Neon SQL
         if self.path == '/posts' or self.path == '/posts/':
             try:
                 db_res = execute_sql("SELECT id, content, saved_style, lat, lng, distance, saved_intel FROM posts ORDER BY id DESC;")
@@ -67,19 +71,47 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
                 
                 output = []
                 for r in rows:
+                    # Dynamiczne i bezpieczne mapowanie indeksów (odporne na błędy typu string indices)
+                    if isinstance(r, dict):
+                        p_id = r.get("id")
+                        p_content = r.get("content")
+                        p_style = r.get("saved_style") or r.get("savedStyle") or "default"
+                        p_lat = r.get("lat")
+                        p_lng = r.get("lng")
+                        p_dist = r.get("distance") or ""
+                        p_intel_raw = r.get("saved_intel") or r.get("savedIntel") or ""
+                    else:
+                        p_id = r[0] if len(r) > 0 else None
+                        p_content = r[1] if len(r) > 1 else ""
+                        p_style = r[2] if len(r) > 2 else "default"
+                        p_lat = r[3] if len(r) > 3 else None
+                        p_lng = r[4] if len(r) > 4 else None
+                        p_dist = r[5] if len(r) > 5 else ""
+                        p_intel_raw = r[6] if len(r) > 6 else ""
+
+                    if p_id is None: continue
+
+                    p_intel = None
+                    if p_intel_raw:
+                        try: p_intel = json.loads(p_intel_raw)
+                        except: p_intel = None
+
                     item = {
-                        "id": int(r[0]), "content": str(r[1]), "savedStyle": str(r[2]),
-                        "coord": {"lat": float(r[3]), "lng": float(r[4])} if r[3] is not None and r[4] is not None else None,
-                        "distance": str(r[5] or ""), "savedIntel": json.loads(r[6]) if r[6] else None
+                        "id": int(p_id),
+                        "content": str(p_content),
+                        "savedStyle": str(p_style),
+                        "coord": {"lat": float(p_lat), "lng": float(p_lng)} if p_lat is not None and p_lng is not None else None,
+                        "distance": str(p_dist),
+                        "savedIntel": p_intel
                     }
                     output.append(item)
                 
                 self.wfile.write(json.dumps(output).encode('utf-8'))
             except Exception as e:
-                self.wfile.write(json.dumps([{"id": 180, "content": "Inicjalizacja bezpiecznego połączenia..."}]).encode('utf-8'))
+                self.wfile.write(json.dumps([{"id": 180, "content": f"Błąd parsowania: {str(e)}"}]).encode('utf-8'))
             return
 
-        # 2. Pobranie jednego rekordu po ID
+        # 2. Endpoint: Pobranie jednego konkretnego posta po ID
         if self.path.startswith('/posts/'):
             try:
                 post_id = int(self.path.split('/')[-1])
@@ -88,10 +120,35 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
                 
                 if rows:
                     r = rows[0]
+                    if isinstance(r, dict):
+                        p_id = r.get("id")
+                        p_content = r.get("content")
+                        p_style = r.get("saved_style") or r.get("savedStyle") or "default"
+                        p_lat = r.get("lat")
+                        p_lng = r.get("lng")
+                        p_dist = r.get("distance") or ""
+                        p_intel_raw = r.get("saved_intel") or r.get("savedIntel") or ""
+                    else:
+                        p_id = r[0]
+                        p_content = r[1]
+                        p_style = r[2]
+                        p_lat = r[3]
+                        p_lng = r[4]
+                        p_dist = r[5]
+                        p_intel_raw = r[6]
+
+                    p_intel = None
+                    if p_intel_raw:
+                        try: p_intel = json.loads(p_intel_raw)
+                        except: p_intel = None
+
                     output = {
-                        "id": int(r[0]), "content": str(r[1]), "savedStyle": str(r[2]),
-                        "coord": {"lat": float(r[3]), "lng": float(r[4])} if r[3] is not None and r[4] is not None else None,
-                        "distance": str(r[5] or ""), "savedIntel": json.loads(r[6]) if r[6] else None
+                        "id": int(p_id),
+                        "content": str(p_content),
+                        "savedStyle": str(p_style),
+                        "coord": {"lat": float(p_lat), "lng": float(p_lng)} if p_lat is not None and p_lng is not None else None,
+                        "distance": str(p_dist),
+                        "savedIntel": p_intel
                     }
                     self.wfile.write(json.dumps(output).encode('utf-8'))
                 else:
@@ -139,7 +196,6 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
             if body.get('savedIntel'):
                 p_intel = json.dumps(body.get('savedIntel')).replace("'", "''")
 
-            # Bezbłędna, przetestowana kwerenda aktualizacji rekordu SQL
             sql = f"UPDATE posts SET content='{p_content}', saved_style='{p_style}', lat={p_lat}, lng={p_lng}, distance='{p_dist}', saved_intel='{p_intel}' WHERE id={post_id};"
             execute_sql(sql)
 
