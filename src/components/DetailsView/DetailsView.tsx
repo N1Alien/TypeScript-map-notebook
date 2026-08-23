@@ -22,7 +22,7 @@ const Component: React.FC<Props> = ({ className }) => {
   const dispatch = useDispatch();
   const safePostId = parseInt(params.id, 10);
 
-  const PROD_BACKEND_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "");
+  const PROD_BACKEND_URL = "https://cyber-map-backend.onrender.com";
     Axios.get(`${PROD_BACKEND_URL}/posts/${safePostId}`)
 
   const currentPost = useSelector((state: any) => {

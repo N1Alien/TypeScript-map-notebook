@@ -1,35 +1,9 @@
 {
   "posts": [
     {
-      "id": 60,
-      "content": "New Tactical Node",
-      "coord": {
-        "lat": 39.977120098439634,
-        "lng": 39.9064656055966
-      },
-      "distance": "1918",
-      "savedIntel": {
-        "id": 647,
-        "flag": "https://flagcdn.com/w320/tr.png",
-        "subregion": "Asia (Asia)",
-        "name": "Turkiye",
-        "capital": "Erzincan",
-        "nativeName": "Turkiye",
-        "currencies": [
-          {
-            "name": "Turkish Lira (TRY)"
-          }
-        ],
-        "languages": [
-          {
-            "name": "Official Language"
-          }
-        ],
-        "latlng": [
-          39.977120098439634,
-          39.9064656055966
-        ]
-      }
+      "id": 147,
+      "content": "aaa",
+      "savedStyle": "underline"
     }
   ],
   "currencies": []

@@ -39,14 +39,17 @@ const Component: React.FC<Props> = ({ className, getIntel }) => {
     Axios.get(`${PROD_BACKEND_URL}/posts/${safeId}`)
 
   useEffect(() => {
-    Axios.get(`${PROD_BACKEND_URL}/posts/${safeId}`)
+    // POPRAWKA OSTATECZNA: Podmieniamy localhost na adres chmurowy Render!
+    const baseApiUrl = "https://cyber-map-backend.onrender.com";
+    Axios.get(`${baseApiUrl}/posts/${safeId}`)
       .then((res) => {
         if (res.data) {
           setSavedPostData(res.data);
         }
       })
       .catch((err) => console.log(err));
-  }, [safeId, PROD_BACKEND_URL]);
+  }, [safeId]);
+
 
   useEffect(() => {
     if (savedPostData && savedPostData.coord && savedPostData.coord.lat && mapInstanceRef.current) {
