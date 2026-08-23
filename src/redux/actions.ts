@@ -2,6 +2,9 @@ import Axios from 'axios';
 // PRODUKCYJNA REWOLUCJA: Pobieramy adres serwera Pythona ze zmiennej chmurowej,
 // a jeśli odpalamy aplikację lokalnie na komputerze – automatycznie wracamy do portu 5000!
 // const PROD_BACKEND_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "");
+// PRODUKCYJNA TARCZA: Wpisujemy Twój bezpieczny serwer z chmury Render na sztywno. 
+// To na zawsze wycina fałszywe zapytania do googleapis.com!
+const PROD_BACKEND_URL = "https://onrender.com";
 
 
 export enum PostActions {
@@ -141,7 +144,6 @@ export const fetchDynamicIntel = (rawBdcData: any) => {
 
 // OSTATECZNA POPRAWKA: Podmieniamy ogólny adres onrender.com na Twoją DOKŁADNĄ subdomenę z panelu Render!
 // Pamiętaj, aby na końcu adresu NIE BYŁO ukośnika "/"!
-const PROD_BACKEND_URL = "https://cyber-map-backend.onrender.com";
 
 export const fetchPosts = () => {
   return (dispatch: (arg0: PostActionsTypes) => void) => {

@@ -51,9 +51,12 @@ const Component: React.FC<Props> = ({ className, id }) => {
 
     // 2. POPRAWKA KLUCZ: Trwały strzał sieciowy PUT do pliku db.json na porcie 4000.
     // Dzięki temu personalizacja czcionki (B, I, U) jest trwale zapamiętana na zawsze!
-    Axios.put(`http://localhost:4000/posts/${id}`, zaktualizowanyPost)
-      .then(() => console.log(`💾 [STYL ZAPISANY] Pomyślnie zapisano motyw "${wybranyStyl}" dla zadania ID ${id}`))
-      .catch(err => console.error("❌ Błąd zapisu wybranego stylu w json-server:", err));
+        // Zastępujemy lokalne zmienne bezpiecznym adresem produkcyjnym
+    const baseApiUrl = "https://onrender.com";
+    Axios.put(`${baseApiUrl}/posts/${id}`, zaktualizowanyPost)
+      .then(() => console.log(`💾 [STYL ZAPISANY] Status 200 OK w chmurze Neon!`))
+      .catch(err => console.error(err));
+
   };
 
   const setRadioButtons = (val: string) => {
