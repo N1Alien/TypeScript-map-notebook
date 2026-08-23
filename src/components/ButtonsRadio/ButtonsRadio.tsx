@@ -13,9 +13,7 @@ interface Props {
 
 export const ButtonsRadio: React.FC<Props> = ({ id }) => {
   const dispatch = useDispatch();
-  const EXACT_CLOUD_URL = "https://onrender.com";
 
-  // POPRAWKA: Jawnopolowa integracja RootState zabezpiecza przed błędami VSC
   const currentPost = useSelector((state: RootState) => {
     const postsList = state.posts || [];
     return postsList.find((post: Task) => post.id === id) || null;
@@ -29,7 +27,9 @@ export const ButtonsRadio: React.FC<Props> = ({ id }) => {
       const updatedPost: Task = { ...currentPost, savedStyle: newStyle };
       
       dispatch(editPostAction(updatedPost));
-      Axios.put(`${EXACT_CLOUD_URL}/posts/${id}`, updatedPost)
+      
+      // Korzystamy z bezpośredniego, szyfrowanego adresu chmury
+      Axios.put(`https://onrender.com{id}`, updatedPost)
         .catch((err) => console.error("❌ Błąd zapisu stylu czcionki:", err));
     }
   };

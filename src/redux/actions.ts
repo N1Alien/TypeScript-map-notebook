@@ -1,5 +1,6 @@
 import Axios from 'axios';
 
+// STRUKTURA DANYCH DLA TYPESCRIPT
 export interface Task {
   id: number;
   content: string;
@@ -66,8 +67,15 @@ export type PostActionsTypes =
   | ImportedIntelAction 
   | ResetIntelAction;
 
-// JAWNY, PANCERNY ADRES SUBDOMENY ZAPOBIEGA PRZEKIEROWANIOM 301
-const EXACT_CLOUD_URL = "https://onrender.com";
+// ============================================================================
+// PROFESJONALNA INSTANCJA CYBER_API - BLOKADA BŁĘDÓW 301 ORAZ CORS
+// ============================================================================
+const cyberApi = Axios.create({
+  baseURL: "https://cyber-map-backend.onrender.com",
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
 
 export const importedPostsAction = (posts: Task[]): PostActionsTypes => ({
   type: IMPORTED_POSTS,
@@ -99,9 +107,10 @@ export const resetIntelAction = (): PostActionsTypes => ({
   type: RESET_INTEL,
 });
 
+// ASYNCHRONICZNE AKCJE THUNK WYKORZYSTUJĄCE ODREDOWANĄ INSTANCJĘ CYBER_API
 export const fetchPosts = () => {
   return (dispatch: (arg: PostActionsTypes) => void) => {
-    Axios.get(`${EXACT_CLOUD_URL}/posts`)
+    cyberApi.get('/posts')
       .then((res) => {
         if (res.data) {
           dispatch(importedPostsAction(res.data as Task[]));
@@ -113,7 +122,7 @@ export const fetchPosts = () => {
 
 export const removePost = (id: number) => {
   return (dispatch: (arg: PostActionsTypes) => void) => {
-    Axios.delete(`${EXACT_CLOUD_URL}/posts/${id}`)
+    cyberApi.delete(`/posts/${id}`)
       .then(() => dispatch(removePostAction(id)))
       .catch((err) => console.error("❌ Błąd usuwania z chmury:", err));
   };
@@ -121,7 +130,7 @@ export const removePost = (id: number) => {
 
 export const addPost = (id: number, content: string, savedStyle: string = "default") => {
   return (dispatch: (arg: PostActionsTypes) => void) => {
-    Axios.post(`${EXACT_CLOUD_URL}/posts`, { 
+    cyberApi.post('/posts', { 
       id, 
       content, 
       savedStyle, 
@@ -130,7 +139,13 @@ export const addPost = (id: number, content: string, savedStyle: string = "defau
       savedIntel: null 
     })
       .then(() => {
-        dispatch(fetchPosts() as any);
+        // Po udanym wstrzyknięciu natychmiast odświeżamy listę z bazy Neon SQL
+        cyberApi.get('/posts')
+          .then((res) => {
+            if (res.data) {
+              dispatch(importedPostsAction(res.data as Task[]));
+            }
+          });
       })
       .catch((err) => console.error("❌ Błąd dodawania do chmury:", err));
   };
@@ -139,12 +154,13 @@ export const addPost = (id: number, content: string, savedStyle: string = "defau
 export const addCoord = (id: number, content: string, coord: { lat: number; lng: number }, distance: string, savedIntel: any) => {
   return (dispatch: (arg: PostActionsTypes) => void) => {
     const updatedTask: Task = { id, content, savedStyle: "default", coord, distance, savedIntel };
-    Axios.put(`${EXACT_CLOUD_URL}/posts/${id}`, updatedTask)
+    cyberApi.put(`/posts/${id}`, updatedTask)
       .then(() => dispatch(editPostAction(updatedTask)))
       .catch((err) => console.error("❌ Błąd aktualizacji współrzędnych w chmurze:", err));
   };
 };
 
+// Fizyczne literały zapobiegające błędom MISSING_EXPORT podczas kompilacji Vite
 export const PostActions = {};
 export const IntelActions = {};
 export const CurrenciesActions = {};
