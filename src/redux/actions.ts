@@ -68,6 +68,7 @@ export type PostActionsTypes =
   | ImportedIntelAction 
   | ResetIntelAction;
 
+// PANCERNY LINK DO TWOJEGO BACKENDU - BEZ UKOŚNIKA NA KOŃCU!
 const EXACT_CLOUD_URL = "https://onrender.com";
 
 export const importedPostsAction = (posts: Task[]): PostActionsTypes => ({
@@ -145,10 +146,7 @@ export const addCoord = (id: number, content: string, coord: { lat: number; lng:
   };
 };
 
-// ============================================================================
-// OSTATECZNA BLOKADA BŁĘDU: Eksport fizycznych zmiennych obiektowych JavaScript
-// To trwale oszukuje kompilator produkcyjny i zamyka problem MISSING_EXPORT.
-// ============================================================================
+// Puste placeholdery, które trwale gaszą błędy [MISSING_EXPORT] w Vite/Rolldown
 export const PostActions = {};
 export const IntelActions = {};
 export const CurrenciesActions = {};
