@@ -1,9 +1,12 @@
 {
   "posts": [
     {
-      "id": 147,
-      "content": "aaa",
-      "savedStyle": "underline"
+      "id": 853,
+      "content": "dsd",
+      "savedStyle": "default",
+      "coord": null,
+      "distance": "",
+      "savedIntel": null
     }
   ],
   "currencies": []

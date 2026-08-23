@@ -1,86 +1,48 @@
 import * as React from 'react';
-import clsx from 'clsx';
-import styles from './ButtonsRadio.module.scss';
 import { useDispatch, useSelector } from 'react-redux';
-import { editPostAction, Task } from '../../redux/actions';
-import { RadioGroup } from '../../components-atoms/RadioGroup/RadioGroup';
-import { Radio } from '../../components-atoms/Radio/Radio';
-import { useEffect, useState } from 'react';
-import Axios from 'axios'; // Zaimportowano Axios do trwałej synchronizacji stylów z db.json
+import { editPostAction, Task, RootState } from '../../redux/actions';
+import Radio from '@material-ui/core/Radio';
+import RadioGroup from '@material-ui/core/RadioGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import FormControl from '@material-ui/core/FormControl';
+import Axios from 'axios';
 
 interface Props {
-  className?: string;
   id: number;
 }
 
-const Component: React.FC<Props> = ({ className, id }) => {
-  const [value, setValue] = useState('');
+export const ButtonsRadio: React.FC<Props> = ({ id }) => {
   const dispatch = useDispatch();
-  
-  const postsList = useSelector((state: any) => state['posts'] || []);
-  
-  // Bezpieczne filtrowanie wybranego posta z pamięci Redux
-  const foundPost = postsList.find((post: Task) => String(post.id) === String(id));
+  const EXACT_CLOUD_URL = "https://onrender.com";
 
-  const [bold, setBold] = useState(false);
-  const [italic, setItalic] = useState(false);
-  const [underline, setUnderline] = useState(false);
+  // POPRAWKA: Jawnopolowa integracja RootState zabezpiecza przed błędem indeksowania tablicy posts
+  const currentPost = useSelector((state: RootState) => {
+    const postsList = state.posts || [];
+    return postsList.find((post: Task) => post.id === id) || null;
+  });
 
-  // Synchronizujemy stan zaznaczonych kropek radiowych zawsze, gdy baza danych zaktualizuje pole savedStyle
-  useEffect(() => {
-    if (foundPost && foundPost.savedStyle) {
-      setValue(foundPost.savedStyle);
-      setRadioButtons(foundPost.savedStyle);
-    }
-  }, [foundPost?.savedStyle]);
+  const value = currentPost ? currentPost.savedStyle : 'default';
 
-  const handleChange = (event: any) => {
-    const wybranyStyl = event.target.value;
-    if (!foundPost) return;
-
-    setValue(wybranyStyl);
-    setRadioButtons(wybranyStyl);
-
-    const zaktualizowanyPost = {
-      ...foundPost,
-      savedStyle: wybranyStyl
-    };
-
-    // 1. Natychmiastowa aktualizacja interfejsu wizualnego w React (Redux Store)
-    dispatch(editPostAction(zaktualizowanyPost));
-
-    // 2. POPRAWKA KLUCZ: Trwały strzał sieciowy PUT do pliku db.json na porcie 4000.
-    // Dzięki temu personalizacja czcionki (B, I, U) jest trwale zapamiętana na zawsze!
-        // Zastępujemy lokalne zmienne bezpiecznym adresem produkcyjnym
-    const baseApiUrl = "https://onrender.com";
-    Axios.put(`${baseApiUrl}/posts/${id}`, zaktualizowanyPost)
-      .then(() => console.log(`💾 [STYL ZAPISANY] Status 200 OK w chmurze Neon!`))
-      .catch(err => console.error(err));
-
-  };
-
-  const setRadioButtons = (val: string) => {
-    setBold(false);
-    setItalic(false);
-    setUnderline(false);
-    if (val === 'bold') {
-      setBold(true);
-    } else if (val === 'italic') {
-      setItalic(true);
-    } else if (val === 'underline') {
-      setUnderline(true);
+  // POPRAWKA: Jawne otypowanie zdarzenia zmiany i obsługa przesyłania do Axiosa
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newStyle = event.target.value;
+    if (currentPost) {
+      const updatedPost: Task = { ...currentPost, savedStyle: newStyle };
+      
+      dispatch(editPostAction(updatedPost));
+      Axios.put(`${EXACT_CLOUD_URL}/posts/${id}`, updatedPost)
+        .catch((err) => console.error("❌ Błąd zapisu stylu czcionki:", err));
     }
   };
 
   return (
-    <div className={clsx(className, styles.root)}>
-      <RadioGroup onChange={(event) => handleChange(event)}>
-        <Radio text="B" value="bold" checked={bold} onChange={()=>{}}/>
-        <Radio text="I" value="italic" checked={italic} onChange={()=>{}}/>
-        <Radio text="U" value="underline" checked={underline} onChange={()=>{}}/>
+    <FormControl component="fieldset">
+      <RadioGroup row aria-label="font-style" name="font-style" value={value} onChange={handleChange}>
+        <FormControlLabel value="default" control={<Radio style={{ color: '#000' }} />} label="N" style={{ color: '#000' }} />
+        <FormControlLabel value="bold" control={<Radio style={{ color: '#000' }} />} label="B" style={{ color: '#000' }} />
+        <FormControlLabel value="italic" control={<Radio style={{ color: '#000' }} />} label="I" style={{ color: '#000' }} />
+        <FormControlLabel value="underline" control={<Radio style={{ color: '#000' }} />} label="U" style={{ color: '#000' }} />
       </RadioGroup>
-    </div>
+    </FormControl>
   );
 };
-
-export { Component as ButtonsRadio };

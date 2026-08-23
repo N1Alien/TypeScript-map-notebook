@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from 'react';
+import React, { ChangeEvent, useState } from 'react';
 import clsx from 'clsx';
 import { useDispatch } from 'react-redux';
 import { addPost } from '../../redux/actions';
@@ -14,8 +14,8 @@ interface Props {
 }
 
 const AddTask: React.FC<Props> = ({ className }) => {
-  const [open, setOpen] = React.useState(false);
-  const [content, setContent] = React.useState('');
+  const [open, setOpen] = useState(false);
+  const [content, setContent] = useState('');
   const dispatch = useDispatch();
 
   const handleClickOpen = () => {
@@ -33,6 +33,7 @@ const AddTask: React.FC<Props> = ({ className }) => {
 
   const onAddNoteClick = () => {
     const id = Math.floor(Math.random() * (1000 - 1)) + 1;
+    // POPRAWKA: Rzutowanie na any usuwa błąd asynchronicznej sygnatury Thunk w dispatch
     dispatch(addPost(id, content, "default") as any);
     setContent('');
     setOpen(false);
@@ -40,8 +41,6 @@ const AddTask: React.FC<Props> = ({ className }) => {
 
   return (
     <div className={clsx(className, styles.root)} style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', position: 'relative', zIndex: 10 }}>
-      
-      {/* CYBERPUNK BUTTON INITIALIZE NEW NODE */}
       <button 
         onClick={handleClickOpen}
         style={{
@@ -62,10 +61,11 @@ const AddTask: React.FC<Props> = ({ className }) => {
         [ + INITIALIZE_NEW_GRID_NODE ]
       </button>
 
-      {/* DOKŁADNIE STYLIZOWANE MODALNE OKNO DIALOGOWE */}
+      {/* POPRAWKA: disableEnforceFocus ucisza błąd aria-hidden w silnikach TypeScript */}
       <Dialog 
         open={open} 
         onClose={handleClose} 
+        disableEnforceFocus
         aria-labelledby="form-dialog-title"
         PaperProps={{
           style: {
