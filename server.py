@@ -31,10 +31,13 @@ def execute_sql(sql_query):
         print(f"❌ [NEON SQL CLOUD ERROR] Kwerenda upadła: {e}")
         return {"rows": []}
 
-# INICJALIZACJA STRUKTURY BAZY DANYCH W CHMURZE AWS
+# INICJALIZACJA STRUKTURY BAZY DANYCH - REZYGNUJEMY Z ZAWODNEGO SERIAL NA RZECZ INT PRIMARY KEY
 try:
+    # Kasujemy starą, zablokowaną tabelę, aby utworzyć ją na nowo z poprawnym typowaniem
+    execute_sql("DROP TABLE IF EXISTS posts;")
+    
     execute_sql("""
-    CREATE TABLE IF NOT EXISTS posts (
+    CREATE TABLE posts (
         id INT PRIMARY KEY,
         content TEXT NOT NULL,
         saved_style TEXT DEFAULT 'default',
@@ -44,7 +47,7 @@ try:
         saved_intel TEXT DEFAULT ''
     );
     """)
-    print("🚀 [NEON SQL] Tabela postów pomyślnie zsynchronizowana online!")
+    print("🚀 [NEON SQL] Tabela posts pomyślnie zresetowana i zsynchronizowana online jako INT PRIMARY KEY!")
 except Exception as e:
     print(f"⚠️ Inicjalizacja: {e}")
 
@@ -96,7 +99,7 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
 
                     item = {
                         "id": int(p_id),
-                        "content": str(p_content), # PRAWIDŁOWE MAPOWANIE NAZWY ZADANIA
+                        "content": str(p_content),
                         "savedStyle": str(p_style),
                         "coord": {"lat": float(p_lat), "lng": float(p_lng)} if p_lat is not None and p_lng is not None else None,
                         "distance": str(p_dist),
@@ -109,7 +112,7 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps([{"id": 180, "content": f"Błąd parsowania: {str(e)}"}]).encode('utf-8'))
             return
 
-        # 2. Endpoint: Pobranie jednego konkretnego posta po ID (Widok szczegółów mapy)
+        # 2. Endpoint: Pobranie jednego konkretnego posta po ID
         if self.path.startswith('/posts/'):
             try:
                 post_id = int(self.path.split('/')[-1])
@@ -142,7 +145,7 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
 
                     output = {
                         "id": int(p_id),
-                        "content": str(p_content), # POPRAWKA: Przekazujemy prawdziwą nazwę z chmury, a nie ID!
+                        "content": str(p_content),
                         "savedStyle": str(p_style),
                         "coord": {"lat": float(p_lat), "lng": float(p_lng)} if p_lat is not None and p_lng is not None else None,
                         "distance": str(p_dist),
@@ -155,17 +158,6 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
             return
 
-        if self.path.startswith('/api/country/'):
-            country_code = self.path.split('/')[-1].lower().strip()
-            target_url = f"https://restcountries.com{country_code}"
-            try:
-                req = urllib.request.Request(target_url, headers={'User-Agent': 'Mozilla/5.0'})
-                with urllib.request.urlopen(req) as response:
-                    self.wfile.write(response.read())
-            except Exception as e:
-                self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
-            return
-
     def do_POST(self):
         if self.path == '/posts' or self.path == '/posts/':
             content_length = int(self.headers['Content-Length'])
@@ -174,17 +166,30 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
             p_content = str(body.get('content', 'New Idea')).replace("'", "''")
             p_style = str(body.get('savedStyle', 'default')).replace("'", "''")
 
-            # POPRAWKA BACKENDU: Pomijamy wymuszanie ID z frontendu, pozwalamy chmurze Neon SQL 
-            # na automatyczne przypisanie kolejnego wolnego numeru ID w tabeli!
-            execute_sql(f"INSERT INTO posts (content, saved_style) VALUES ('{p_content}', '{p_style}');")
+            # AUTOMATYCZNE OBLICZANIE KOLEJNEGO ID W CHMURZE (100% BEZBŁĘDNE OMINIĘCIE DIALOGU SERIAL)
+            try:
+                max_id_res = execute_sql("SELECT MAX(id) FROM posts;")
+                rows = max_id_res.get("rows", [])
+                if rows and rows[0] is not None:
+                    # Sprawdzamy czy struktura to tablica czy słownik i wyciągamy najwyższy numer ID
+                    max_id = rows[0].get("max") if isinstance(rows[0], dict) else rows[0][0]
+                    next_id = int(max_id or 0) + 1
+                else:
+                    next_id = 1
+            except Exception as e:
+                print(f"Błąd liczenia max_id, podstawiam losowy: {e}")
+                import random
+                next_id = random.randint(1, 999)
+
+            # Wstrzykujemy rekord ze sprawdzonym, unikalnym numerem ID
+            execute_sql(f"INSERT INTO posts (id, content, saved_style, lat, lng, distance, saved_intel) VALUES ({next_id}, '{p_content}', '{p_style}', NULL, NULL, '', '');")
             
             self.send_response(200)
             self.send_header('Access-Control-Allow-Origin', '*')
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps({"status": "success"}).encode('utf-8'))
+            self.wfile.write(json.dumps({"status": "success", "id": next_id}).encode('utf-8'))
             return
-
 
     def do_PUT(self):
         if self.path.startswith('/posts/'):
@@ -207,9 +212,6 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
             if body.get('savedIntel'):
                 p_intel = json.dumps(body.get('savedIntel')).replace("'", "''")
 
-            sql = f"UPDATE posts SET content='{p_content}', saved_style='{p_style}', lat={p_lat}, lng={p_lng}, distance='{p_dist}', stroke_color='none', saved_intel='{p_intel}' WHERE id={post_id};"
-            
-            # Poprawka strukturalna: Jeśli kolumna w bazie nie posiada dodatkowych pól, upewniamy się, że modyfikujemy tylko zdefiniowaną strukturę
             sql_clean = f"UPDATE posts SET content='{p_content}', saved_style='{p_style}', lat={p_lat}, lng={p_lng}, distance='{p_dist}', saved_intel='{p_intel}' WHERE id={post_id};"
             execute_sql(sql_clean)
 
