@@ -3,13 +3,11 @@ import urllib.request
 import json
 import os
 
-# PRODUKCYJNY ADRES POŁĄCZENIA NEON.TECH SQL
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://neondb_owner:npg_2Q0GUXmTAFiW@ep-flat-field-b1lb26u8-pooler.c-5.eu-central-1.aws.neon.tech/neondb?sslmode=require")
 
 def execute_sql(sql_query):
-    """Pancerny, oficjalny sterownik HTTP gateway dla chmury Neon.tech SQL"""
+    """Oficjalny, zunifikowany sterownik bramki HTTP dla chmury Neon.tech"""
     url = "https://neon.tech"
-    
     req = urllib.request.Request(
         url,
         data=sql_query.encode('utf-8'),
@@ -24,20 +22,20 @@ def execute_sql(sql_query):
             raw_res = response.read().decode('utf-8')
             res_json = json.loads(raw_res)
             
+            # OBSŁUGA STRUKTURY NEON: Szukamy tablicy rows wewnątrz słownika
             if isinstance(res_json, dict) and "rows" in res_json:
+                return res_json.get("rows", [])
+            elif isinstance(res_json, list):
                 return res_json
-            return {"rows": res_json if isinstance(res_json, list) else []}
+            return []
     except Exception as e:
         print(f"❌ [NEON SQL CLOUD ERROR] Kwerenda upadła: {e}")
-        return {"rows": []}
+        return []
 
-# INICJALIZACJA STRUKTURY BAZY DANYCH - REZYGNUJEMY Z ZAWODNEGO SERIAL NA RZECZ INT PRIMARY KEY
+# INICJALIZACJA STRUKTURY BAZY DANYCH
 try:
-    # Kasujemy starą, zablokowaną tabelę, aby utworzyć ją na nowo z poprawnym typowaniem
-    execute_sql("DROP TABLE IF EXISTS posts;")
-    
     execute_sql("""
-    CREATE TABLE posts (
+    CREATE TABLE IF NOT EXISTS posts (
         id INT PRIMARY KEY,
         content TEXT NOT NULL,
         saved_style TEXT DEFAULT 'default',
@@ -47,7 +45,7 @@ try:
         saved_intel TEXT DEFAULT ''
     );
     """)
-    print("🚀 [NEON SQL] Tabela posts pomyślnie zresetowana i zsynchronizowana online jako INT PRIMARY KEY!")
+    print("🚀 [NEON SQL] Tabela posts pomyślnie zsynchronizowana online!")
 except Exception as e:
     print(f"⚠️ Inicjalizacja: {e}")
 
@@ -68,8 +66,7 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
         # 1. Endpoint: Pobranie wszystkich postów z chmury Neon SQL
         if self.path == '/posts' or self.path == '/posts/':
             try:
-                db_res = execute_sql("SELECT id, content, saved_style, lat, lng, distance, saved_intel FROM posts ORDER BY id DESC;")
-                rows = db_res.get("rows", [])
+                rows = execute_sql("SELECT id, content, saved_style, lat, lng, distance, saved_intel FROM posts ORDER BY id DESC;")
                 
                 output = []
                 for r in rows:
@@ -116,8 +113,7 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
         if self.path.startswith('/posts/'):
             try:
                 post_id = int(self.path.split('/')[-1])
-                db_res = execute_sql(f"SELECT id, content, saved_style, lat, lng, distance, saved_intel FROM posts WHERE id={post_id};")
-                rows = db_res.get("rows", [])
+                rows = execute_sql(f"SELECT id, content, saved_style, lat, lng, distance, saved_intel FROM posts WHERE id={post_id};")
                 
                 if rows:
                     r = rows[0]
@@ -158,6 +154,17 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
             return
 
+        if self.path.startswith('/api/country/'):
+            country_code = self.path.split('/')[-1].lower().strip()
+            target_url = f"https://restcountries.com{country_code}"
+            try:
+                req = urllib.request.Request(target_url, headers={'User-Agent': 'Mozilla/5.0'})
+                with urllib.request.urlopen(req) as response:
+                    self.wfile.write(response.read())
+            except Exception as e:
+                self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
+            return
+
     def do_POST(self):
         if self.path == '/posts' or self.path == '/posts/':
             content_length = int(self.headers['Content-Length'])
@@ -166,22 +173,17 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
             p_content = str(body.get('content', 'New Idea')).replace("'", "''")
             p_style = str(body.get('savedStyle', 'default')).replace("'", "''")
 
-            # AUTOMATYCZNE OBLICZANIE KOLEJNEGO ID W CHMURZE (100% BEZBŁĘDNE OMINIĘCIE DIALOGU SERIAL)
             try:
-                max_id_res = execute_sql("SELECT MAX(id) FROM posts;")
-                rows = max_id_res.get("rows", [])
-                if rows and rows[0] is not None:
-                    # Sprawdzamy czy struktura to tablica czy słownik i wyciągamy najwyższy numer ID
-                    max_id = rows[0].get("max") if isinstance(rows[0], dict) else rows[0][0]
+                rows = execute_sql("SELECT MAX(id) FROM posts;")
+                if rows:
+                    r = rows[0]
+                    max_id = r.get("max") if isinstance(r, dict) else r[0]
                     next_id = int(max_id or 0) + 1
                 else:
                     next_id = 1
-            except Exception as e:
-                print(f"Błąd liczenia max_id, podstawiam losowy: {e}")
-                import random
-                next_id = random.randint(1, 999)
+            except:
+                next_id = 1
 
-            # Wstrzykujemy rekord ze sprawdzonym, unikalnym numerem ID
             execute_sql(f"INSERT INTO posts (id, content, saved_style, lat, lng, distance, saved_intel) VALUES ({next_id}, '{p_content}', '{p_style}', NULL, NULL, '', '');")
             
             self.send_response(200)
