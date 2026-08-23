@@ -171,11 +171,12 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
             content_length = int(self.headers['Content-Length'])
             body = json.loads(self.rfile.read(content_length).decode('utf-8'))
             
-            p_id = int(body.get('id', 1))
             p_content = str(body.get('content', 'New Idea')).replace("'", "''")
             p_style = str(body.get('savedStyle', 'default')).replace("'", "''")
 
-            execute_sql(f"INSERT INTO posts (id, content, saved_style) VALUES ({p_id}, '{p_content}', '{p_style}') ON CONFLICT (id) DO NOTHING;")
+            # POPRAWKA BACKENDU: Pomijamy wymuszanie ID z frontendu, pozwalamy chmurze Neon SQL 
+            # na automatyczne przypisanie kolejnego wolnego numeru ID w tabeli!
+            execute_sql(f"INSERT INTO posts (content, saved_style) VALUES ('{p_content}', '{p_style}');")
             
             self.send_response(200)
             self.send_header('Access-Control-Allow-Origin', '*')
@@ -183,6 +184,7 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps({"status": "success"}).encode('utf-8'))
             return
+
 
     def do_PUT(self):
         if self.path.startswith('/posts/'):
