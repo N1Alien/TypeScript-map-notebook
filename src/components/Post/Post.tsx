@@ -5,7 +5,6 @@ import Card from '@material-ui/core/Card';
 import CardActionArea from '@material-ui/core/CardActionArea';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
-import Typography from '@material-ui/core/Typography';
 import { Task } from '../../redux/actions';
 import { ButtonsRadio } from '../ButtonsRadio/ButtonsRadio';
 import { useDispatch } from 'react-redux';
@@ -96,9 +95,8 @@ const Post: React.FC<Props> = ({ className, data }) => {
               </div>
 
               {/* Treść zadania - Edytowalna na żywo z zapisem do Neon SQL */}
-              <Typography
-                variant="body1"
-                component="p"
+                         {/* ZASTĘPUJEMY TYPOGRAPHY CZYSTYM TAGIEM <p> ODPORNYM NA BŁĘDY GOOGLEAPIS */}
+              <p
                 contentEditable
                 suppressContentEditableWarning={true}
                 style={{ 
@@ -110,12 +108,14 @@ const Post: React.FC<Props> = ({ className, data }) => {
                   background: 'rgba(0,0,0,0.03)',
                   borderLeft: '2px solid #ff0055',
                   minHeight: '40px',
-                  outline: 'none'
+                  outline: 'none',
+                  margin: '10px 0 0 0'
                 }}
                 onBlur={handleTextBlur}
               >
                 {data.content}
-              </Typography>
+              </p>
+
             </div>
           </CardContent>
         </CardActionArea>

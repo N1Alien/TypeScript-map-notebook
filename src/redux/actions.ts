@@ -124,13 +124,27 @@ export const removePost = (id: number) => {
   };
 };
 
+
+// Znajdź asynchroniczną funkcję addPost na dole pliku i upewnij się, że przesyła czyste parametry:
 export const addPost = (id: number, content: string, savedStyle: string = "default") => {
   return (dispatch: (arg: PostActionsTypes) => void) => {
-    Axios.post('/posts', { id, content, savedStyle, coord: null, distance: "", savedIntel: null })
-      .then(() => dispatch(addPostAction(id, content)))
-      .catch((err) => console.error(err));
+    Axios.post('/posts', { 
+      id, 
+      content, 
+      savedStyle, 
+      coord: null, 
+      distance: "", 
+      savedIntel: null 
+    })
+      .then(() => {
+        // Po udanym zapisie w Neon SQL, natychmiast wymuszamy odświeżenie całej listy z chmury!
+        // To daje 100% gwarancji, że nowa karta z czcionkami od razu pojawi się na Twoim ekranie!
+        dispatch(fetchPosts() as any);
+      })
+      .catch((err) => console.error("❌ Błąd dodawania zadania do chmury:", err));
   };
 };
+
 
 export const addCoord = (id: number, content: string, coord: { lat: number; lng: number }, distance: string, savedIntel: any) => {
   return (dispatch: (arg: PostActionsTypes) => void) => {
