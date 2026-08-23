@@ -3,7 +3,9 @@ import urllib.request
 import json
 import os
 
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://neondb_owner:npg_2Q0GUXmTAFiW@ep-flat-field-b1lb26u8-pooler.c-5.eu-central-1.aws.neon.tech/neondb?sslmode=require")
+# OSTATECZNA BLOKADA BŁĘDU POŁĄCZENIA: Wpisujemy Twój dokładny URL bazy na sztywno w Pythonie!
+# To całkowicie eliminuje złe zmienne środowiskowe na Renderze i mostkuje połączenie.
+DATABASE_URL = "postgresql://neondb_owner:npg_2Q0GUXmTAFiW@ep-flat-field-b1lb26u8-pooler.c-5.eu-central-1.aws.neon.tech/neondb?sslmode=require"
 
 def execute_sql(sql_query):
     """Oficjalny, zunifikowany sterownik bramki HTTP dla chmury Neon.tech"""
