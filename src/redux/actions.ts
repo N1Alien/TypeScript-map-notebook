@@ -101,50 +101,46 @@ export const resetIntelAction = (): PostActionsTypes => ({
   type: RESET_INTEL,
 });
 
-// ASYNCHRONICZNE AKCJE REDUX-THUNK ZSYNCHRONIZOWANE Z NEON SQL
+// W pliku actions.ts zmień funkcje sieciowe na czyste podkatalogi:
+
 export const fetchPosts = () => {
   return (dispatch: (arg: PostActionsTypes) => void) => {
-    Axios.get(`${EXACT_CLOUD_URL}/posts`)
+    // Czyste /posts zamiast pełnego adresu URL
+    Axios.get('/posts')
       .then((res) => {
         if (res.data) {
           dispatch(importedPostsAction(res.data as Task[]));
         }
       })
-      .catch((err) => console.error("❌ Błąd pobierania postów z chmury Neon:", err));
+      .catch((err) => console.error("❌ Błąd:", err));
   };
 };
 
 export const removePost = (id: number) => {
   return (dispatch: (arg: PostActionsTypes) => void) => {
-    Axios.delete(`${EXACT_CLOUD_URL}/posts/${id}`)
+    Axios.delete(`/posts/${id}`)
       .then(() => dispatch(removePostAction(id)))
-      .catch((err) => console.error("❌ Błąd usuwania z chmury:", err));
+      .catch((err) => console.error(err));
   };
 };
 
 export const addPost = (id: number, content: string, savedStyle: string = "default") => {
   return (dispatch: (arg: PostActionsTypes) => void) => {
-    Axios.post(`${EXACT_CLOUD_URL}/posts`, { 
-      id, 
-      content, 
-      savedStyle, 
-      coord: null, 
-      distance: "", 
-      savedIntel: null 
-    })
+    Axios.post('/posts', { id, content, savedStyle, coord: null, distance: "", savedIntel: null })
       .then(() => dispatch(addPostAction(id, content)))
-      .catch((err) => console.error("❌ Błąd dodawania do chmury:", err));
+      .catch((err) => console.error(err));
   };
 };
 
 export const addCoord = (id: number, content: string, coord: { lat: number; lng: number }, distance: string, savedIntel: any) => {
   return (dispatch: (arg: PostActionsTypes) => void) => {
     const updatedTask: Task = { id, content, savedStyle: "default", coord, distance, savedIntel };
-    Axios.put(`${EXACT_CLOUD_URL}/posts/${id}`, updatedTask)
+    Axios.put(`/posts/${id}`, updatedTask)
       .then(() => dispatch(editPostAction(updatedTask)))
-      .catch((err) => console.error("❌ Błąd aktualizacji współrzędnych w chmurze:", err));
+      .catch((err) => console.error(err));
   };
 };
+
 
 // Puste placeholdery, które trwale gaszą błędy [MISSING_EXPORT] w Vite/Rolldown
 export const PostActions = {};
