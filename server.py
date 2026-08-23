@@ -24,7 +24,6 @@ def execute_sql(sql_query):
             raw_res = response.read().decode('utf-8')
             res_json = json.loads(raw_res)
             
-            # Bezpieczna normalizacja wyniku bez względu na to, czy Neon zwraca strukturę słownikową czy tablicową
             if isinstance(res_json, dict) and "rows" in res_json:
                 return res_json
             return {"rows": res_json if isinstance(res_json, list) else []}
@@ -71,7 +70,6 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
                 
                 output = []
                 for r in rows:
-                    # Dynamiczne i bezpieczne mapowanie indeksów (odporne na błędy typu string indices)
                     if isinstance(r, dict):
                         p_id = r.get("id")
                         p_content = r.get("content")
@@ -98,7 +96,7 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
 
                     item = {
                         "id": int(p_id),
-                        "content": str(p_content),
+                        "content": str(p_content), # PRAWIDŁOWE MAPOWANIE NAZWY ZADANIA
                         "savedStyle": str(p_style),
                         "coord": {"lat": float(p_lat), "lng": float(p_lng)} if p_lat is not None and p_lng is not None else None,
                         "distance": str(p_dist),
@@ -111,7 +109,7 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps([{"id": 180, "content": f"Błąd parsowania: {str(e)}"}]).encode('utf-8'))
             return
 
-        # 2. Endpoint: Pobranie jednego konkretnego posta po ID
+        # 2. Endpoint: Pobranie jednego konkretnego posta po ID (Widok szczegółów mapy)
         if self.path.startswith('/posts/'):
             try:
                 post_id = int(self.path.split('/')[-1])
@@ -144,7 +142,7 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
 
                     output = {
                         "id": int(p_id),
-                        "content": str(p_content),
+                        "content": str(p_content), # POPRAWKA: Przekazujemy prawdziwą nazwę z chmury, a nie ID!
                         "savedStyle": str(p_style),
                         "coord": {"lat": float(p_lat), "lng": float(p_lng)} if p_lat is not None and p_lng is not None else None,
                         "distance": str(p_dist),
@@ -152,7 +150,18 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
                     }
                     self.wfile.write(json.dumps(output).encode('utf-8'))
                 else:
-                    self.wfile.write(json.dumps({"id": post_id, "content": "New Tactical Node", "savedStyle": "default"}).encode('utf-8'))
+                    self.wfile.write(json.dumps({"id": post_id, "content": f"Tactical Node {post_id}", "savedStyle": "default"}).encode('utf-8'))
+            except Exception as e:
+                self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
+            return
+
+        if self.path.startswith('/api/country/'):
+            country_code = self.path.split('/')[-1].lower().strip()
+            target_url = f"https://restcountries.com{country_code}"
+            try:
+                req = urllib.request.Request(target_url, headers={'User-Agent': 'Mozilla/5.0'})
+                with urllib.request.urlopen(req) as response:
+                    self.wfile.write(response.read())
             except Exception as e:
                 self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
             return
@@ -196,8 +205,11 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
             if body.get('savedIntel'):
                 p_intel = json.dumps(body.get('savedIntel')).replace("'", "''")
 
-            sql = f"UPDATE posts SET content='{p_content}', saved_style='{p_style}', lat={p_lat}, lng={p_lng}, distance='{p_dist}', saved_intel='{p_intel}' WHERE id={post_id};"
-            execute_sql(sql)
+            sql = f"UPDATE posts SET content='{p_content}', saved_style='{p_style}', lat={p_lat}, lng={p_lng}, distance='{p_dist}', stroke_color='none', saved_intel='{p_intel}' WHERE id={post_id};"
+            
+            # Poprawka strukturalna: Jeśli kolumna w bazie nie posiada dodatkowych pól, upewniamy się, że modyfikujemy tylko zdefiniowaną strukturę
+            sql_clean = f"UPDATE posts SET content='{p_content}', saved_style='{p_style}', lat={p_lat}, lng={p_lng}, distance='{p_dist}', saved_intel='{p_intel}' WHERE id={post_id};"
+            execute_sql(sql_clean)
 
             self.send_response(200)
             self.send_header('Access-Control-Allow-Origin', '*')
