@@ -70,8 +70,10 @@ export type PostActionsTypes =
 // ============================================================================
 // PROFESJONALNA INSTANCJA CYBER_API - BLOKADA BŁĘDÓW 301 ORAZ CORS
 // ============================================================================
+const apiBaseUrl = (import.meta as any).env?.VITE_API_URL || '';
+
 const cyberApi = Axios.create({
-  baseURL: "https://cyber-map-backend.onrender.com",
+  baseURL: apiBaseUrl || undefined,
   headers: {
     'Content-Type': 'application/json'
   }
@@ -87,10 +89,9 @@ export const removePostAction = (id: number): PostActionsTypes => ({
   payload: id,
 });
 
-export const addPostAction = (id: number, content: string): PostActionsTypes => ({
+export const addPostAction = (id: number, content: string, savedStyle: string = 'default'): PostActionsTypes => ({
   type: ADD_POST,
-  id,
-  content,
+  payload: { id, content, savedStyle },
 });
 
 export const editPostAction = (post: Task): PostActionsTypes => ({
@@ -161,6 +162,16 @@ export const addCoord = (id: number, content: string, coord: { lat: number; lng:
 };
 
 // Fizyczne literały zapobiegające błędom MISSING_EXPORT podczas kompilacji Vite
-export const PostActions = {};
-export const IntelActions = {};
+export const PostActions = {
+  ADD_POST,
+  REMOVE_POST,
+  EDIT_POST,
+  IMPORT_POSTS: IMPORTED_POSTS,
+};
+
+export const IntelActions = {
+  IMPORT_INTEL: IMPORTED_INTEL,
+  RESET_INTEL,
+};
+
 export const CurrenciesActions = {};

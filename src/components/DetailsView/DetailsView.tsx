@@ -22,8 +22,7 @@ const Component: React.FC<Props> = ({ className }) => {
   const dispatch = useDispatch();
   const safePostId = parseInt(params.id, 10);
 
-  // UŻYWAMY BEZPIECZNEGO, SZTYWNEGO LINKU CHMUROWEGO
-  const EXACT_CLOUD_URL = "https://onrender.com";
+  const EXACT_CLOUD_URL = (import.meta as any).env?.VITE_API_URL || '';
 
   // POPRAWKA: Typujemy stan jako RootState, usuwając czerwone podkreślenie filter/length
   const currentPost = useSelector((state: RootState) => {
@@ -35,6 +34,11 @@ const Component: React.FC<Props> = ({ className }) => {
   const [distance, setDistance] = useState('');
   const [hasClicked, setHasClicked] = useState(false);
   const [taskContent, setTaskContent] = useState('');
+
+  const resolvedTaskName =
+    (taskContent && taskContent.trim()) ||
+    (Array.isArray(currentPost) && currentPost[0] && currentPost[0].content && currentPost[0].content.trim()) ||
+    `Task ${safePostId}`;
 
   const obliczDystansMiedzyPunktami = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 6371; 
@@ -65,7 +69,7 @@ const Component: React.FC<Props> = ({ className }) => {
           const code = String(res.data.countryCode).toLowerCase().trim();
           const countryName = res.data.countryName || "Unknown Country";
           const linkDoFlagi = "https:" + s + s + "flagcdn.com" + s + "w320" + s + code + ".png";
-          
+
           let subregionStr = res.data.continent || "Global Territory";
           if (res.data.localityInfo && Array.isArray(res.data.localityInfo.informative)) {
             const inf = res.data.localityInfo.informative.find((i: any) => i.order === 1 || i.order === 2);
@@ -86,20 +90,29 @@ const Component: React.FC<Props> = ({ className }) => {
             latlng: [safeLat, safeLng]
           };
 
+          let distanceText = '0';
           if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition((position) => {
               const userLat = position.coords.latitude;
               const userLon = position.coords.longitude;
-              
               const obliczonyDystans = Math.floor(obliczDystansMiedzyPunktami(userLat, userLon, safeLat, safeLng));
-              const stringDystans = String(obliczonyDystans);
+              distanceText = String(obliczonyDystans);
 
-              setDistance(stringDystans);
+              setDistance(distanceText);
               setHasClicked(true);
               dispatch(importedIntelAction(dynamicIntelData));
-              const contentText = taskContent || "Task " + safePostId;
-              dispatch(addCoord(safePostId, contentText, { lat: safeLat, lng: safeLng }, stringDystans, dynamicIntelData) as any);
+              dispatch(addCoord(safePostId, resolvedTaskName, { lat: safeLat, lng: safeLng }, distanceText, dynamicIntelData) as any);
+            }, () => {
+              setDistance(distanceText);
+              setHasClicked(true);
+              dispatch(importedIntelAction(dynamicIntelData));
+              dispatch(addCoord(safePostId, resolvedTaskName, { lat: safeLat, lng: safeLng }, distanceText, dynamicIntelData) as any);
             });
+          } else {
+            setDistance(distanceText);
+            setHasClicked(true);
+            dispatch(importedIntelAction(dynamicIntelData));
+            dispatch(addCoord(safePostId, resolvedTaskName, { lat: safeLat, lng: safeLng }, distanceText, dynamicIntelData) as any);
           }
         }
       })
@@ -110,12 +123,13 @@ const Component: React.FC<Props> = ({ className }) => {
     window.onbeforeunload = function () { return true; };
     setDistance('');
     setHasClicked(false);
-    dispatch(resetIntelAction());
+
     Axios.get(`${EXACT_CLOUD_URL}/posts/${safePostId}`)
       .then((res) => {
         if (res.data) {
           setTaskContent(res.data.content || '');
-          if (res.data.coord && res.data.coord.lat) {
+
+          if (res.data.coord && typeof res.data.coord.lat === 'number') {
             setHasClicked(true);
             if (res.data.distance) {
               setDistance(String(res.data.distance));
@@ -123,11 +137,13 @@ const Component: React.FC<Props> = ({ className }) => {
             if (res.data.savedIntel) {
               dispatch(importedIntelAction(res.data.savedIntel));
             }
+          } else if (res.data.savedIntel) {
+            dispatch(importedIntelAction(res.data.savedIntel));
           }
         }
       })
       .catch((err) => console.log("Nowy węzeł taktyczny Neon SQL:", err));
-  }, [safePostId]);
+  }, [safePostId, dispatch]);
 
   return (
     <Card 

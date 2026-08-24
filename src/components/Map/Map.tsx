@@ -35,24 +35,21 @@ const Component: React.FC<Props> = ({ className, getIntel }) => {
 
   const safeId = parseInt(params.id || '0', 10);
   const [savedPostData, setSavedPostData] = useState<any>(null);
-  const PROD_BACKEND_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "");
-    Axios.get(`${PROD_BACKEND_URL}/posts/${safeId}`)
+  const PROD_BACKEND_URL = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
 
   useEffect(() => {
-    // POPRAWKA OSTATECZNA: Podmieniamy localhost na adres chmurowy Render!
-    const baseApiUrl = "https://cyber-map-backend.onrender.com";
-    Axios.get(`${baseApiUrl}/posts/${safeId}`)
+    Axios.get(`${PROD_BACKEND_URL}/posts/${safeId}`)
       .then((res) => {
         if (res.data) {
           setSavedPostData(res.data);
         }
       })
       .catch((err) => console.log(err));
-  }, [safeId]);
+  }, [safeId, PROD_BACKEND_URL]);
 
 
   useEffect(() => {
-    if (savedPostData && savedPostData.coord && savedPostData.coord.lat && mapInstanceRef.current) {
+    if (savedPostData && savedPostData.coord && typeof savedPostData.coord.lat === 'number' && mapInstanceRef.current) {
       const lat = savedPostData.coord.lat;
       const lng = savedPostData.coord.lng;
 
@@ -95,12 +92,11 @@ const Component: React.FC<Props> = ({ className, getIntel }) => {
     };
   }, [safeId]);
 
-  const handleMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMapClick = (e: L.LeafletMouseEvent) => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    const point = map.mouseEventToLatLng(e.nativeEvent);
-    
+    const point = e.latlng;
     const safeLat = Math.max(-90, Math.min(90, point.lat));
     let safeLng = point.lng % 360;
     if (safeLng > 180) safeLng -= 360;
@@ -116,12 +112,22 @@ const Component: React.FC<Props> = ({ className, getIntel }) => {
     getIntel(safeLat, safeLng);
   };
 
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    map.on('click', handleMapClick);
+
+    return () => {
+      map.off('click', handleMapClick);
+    };
+  }, [safeId]);
+
   return (
     <div id="map" className={clsx(className, styles.root)}>
       <div 
         className="map" 
-        ref={mapRef} 
-        onClick={handleMapClick}
+        ref={mapRef}
         style={{ 
           height: '500px', 
           width: '100%', 

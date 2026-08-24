@@ -3,23 +3,22 @@ import { useSelector } from 'react-redux';
 import clsx from 'clsx';
 import styles from './PostCard.module.scss';
 import Post from '../Post/Post';
-import { Task, RootState } from '../../redux/actions';
+import { Task } from '../../redux/actions';
+import { RootState } from '../../redux/rootReducer';
 
 interface Props {
   className?: string;
 }
 
 const Component: React.FC<Props> = ({ className }) => {
-  const postsData = useSelector((state: RootState) => state.posts);
-  
+  const postsData = useSelector((state: RootState) => state.posts ?? []);
+
   const getItems = (): Task[] => {
-    // POPRAWKA FRONTENDU KLUCZ: Jeśli postsData jest już czystą tablicą z chmury, 
-    // zwracamy ją bezpośrednio, zamiast przepuszczać przez Object.values, co naprawia renderowanie!
     if (Array.isArray(postsData)) {
       return postsData;
     }
-    const list = postsData || [];
-    return Object.values(list);
+
+    return Object.values(postsData ?? {});
   };
 
   const kafelki = getItems();
@@ -37,12 +36,9 @@ const Component: React.FC<Props> = ({ className }) => {
         zIndex: 5
       }}
     >
-      {kafelki.map((post: Task) => {
-        // Dodatkowe zabezpieczenie klucza głównego przed błędami undefined
-        const safeId = post && post.id ? post.id : Math.random();
-        return (
-          <Post data={post} key={safeId}/>
-        );
+      {kafelki.map((post: Task, index: number) => {
+        const safeId = post && post.id ? String(post.id) : `post-${index}`;
+        return <Post data={post} key={safeId} />;
       })}
 
       {kafelki.length === 0 && (

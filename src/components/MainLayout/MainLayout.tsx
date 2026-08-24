@@ -10,7 +10,7 @@ interface Props {
 
 const Component: React.FC<Props> = ({ children, className }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
+  console.log("MainLayout component rendered. Children:", children);
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;

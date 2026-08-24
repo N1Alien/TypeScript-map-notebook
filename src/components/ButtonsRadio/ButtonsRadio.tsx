@@ -12,6 +12,7 @@ interface Props {
 }
 
 export const ButtonsRadio: React.FC<Props> = ({ id }) => {
+  console.log("ButtonsRadio component rendered with id:", id);
   const dispatch = useDispatch();
 
   const currentPost = useSelector((state: RootState) => {
@@ -25,11 +26,10 @@ export const ButtonsRadio: React.FC<Props> = ({ id }) => {
     const newStyle = event.target.value;
     if (currentPost) {
       const updatedPost: Task = { ...currentPost, savedStyle: newStyle };
-      
+      const apiBaseUrl = import.meta.env.VITE_API_URL || '';
+
       dispatch(editPostAction(updatedPost));
-      
-      // Korzystamy z bezpośredniego, szyfrowanego adresu chmury
-      Axios.put(`https://onrender.com{id}`, updatedPost)
+      Axios.put(`${apiBaseUrl}/${id}`, updatedPost)
         .catch((err) => console.error("❌ Błąd zapisu stylu czcionki:", err));
     }
   };

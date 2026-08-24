@@ -7,7 +7,7 @@ services:
       context: .
       dockerfile: python.Dockerfile
     ports:
-      - "5000:5000"
+      - "5001:5000"
     environment:
       - DATABASE_URL=postgresql://neondb_owner:npg_2Q0GUXmTAFiW@ep-flat-field-b1lb26u8-pooler.c-5.eu-central-1.aws.neon.tech/neondb?sslmode=require
 
@@ -19,6 +19,6 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - VITE_API_URL=http://localhost:5000
+      - VITE_API_URL=http://localhost:5001
     depends_on:
       - python-proxy

@@ -19,6 +19,7 @@ interface Props {
 }
 
 const Post: React.FC<Props> = ({ className, data }) => {
+  console.log("Post component rendered with data:", data);
   const dispatch = useDispatch();
   const history = useHistory();
   const [style, setStyle] = useState<React.CSSProperties | undefined>(undefined);
@@ -39,7 +40,7 @@ const Post: React.FC<Props> = ({ className, data }) => {
     const nowyTekst = e.target.textContent;
     dispatch(editPostAction({ ...data, content: nowyTekst }));
 
-    const baseApiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+    const baseApiUrl = import.meta.env.VITE_API_URL || "";
     Axios.put(`${baseApiUrl}/posts/${data.id}`, { ...data, content: nowyTekst })
       .catch(err => console.error(err));
   };
