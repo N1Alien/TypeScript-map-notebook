@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import { useSelector } from 'react-redux';
 import clsx from 'clsx';
@@ -14,6 +13,11 @@ const Component: React.FC<Props> = ({ className }) => {
   const postsData = useSelector((state: RootState) => state.posts);
   
   const getItems = (): Task[] => {
+    // POPRAWKA FRONTENDU KLUCZ: Jeśli postsData jest już czystą tablicą z chmury, 
+    // zwracamy ją bezpośrednio, zamiast przepuszczać przez Object.values, co naprawia renderowanie!
+    if (Array.isArray(postsData)) {
+      return postsData;
+    }
     const list = postsData || [];
     return Object.values(list);
   };
@@ -27,17 +31,20 @@ const Component: React.FC<Props> = ({ className }) => {
         display: 'flex', 
         flexWrap: 'wrap', 
         justifyContent: 'center', 
-        gap: '10px', 
+        gap: '15px', 
         padding: '20px',
         position: 'relative',
         zIndex: 5
       }}
     >
-      {kafelki.map((post: Task) => (
-        <Post data={post} key={post.id}/>
-      ))}
+      {kafelki.map((post: Task) => {
+        // Dodatkowe zabezpieczenie klucza głównego przed błędami undefined
+        const safeId = post && post.id ? post.id : Math.random();
+        return (
+          <Post data={post} key={safeId}/>
+        );
+      })}
 
-      {/* POPRAWKA FRONTENDU: Komunikat alarmowy HUD, jeśli chmura Neon SQL zwraca pustą tablicę [] */}
       {kafelki.length === 0 && (
         <div style={{
           border: '1px dashed #fcee0a',

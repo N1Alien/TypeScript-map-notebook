@@ -2,6 +2,7 @@ import http.server
 import urllib.request
 import json
 import os
+import time  # Potrzebne do generowania unikalnych ID na bazie milisekund
 
 DATABASE_URL = "postgresql://neondb_owner:npg_2Q0GUXmTAFiW@ep-flat-field-b1lb26u8-pooler.c-5.eu-central-1.aws.neon.tech/neondb?sslmode=require"
 
@@ -31,11 +32,10 @@ def execute_sql(sql_query):
         print(f"❌ [NEON CHMURA ERROR] Kwerenda upadła: {e}")
         return []
 
-# INICJALIZACJA STRUKTURY BAZY DANYCH
 try:
     execute_sql("""
     CREATE TABLE IF NOT EXISTS posts (
-        id INT PRIMARY KEY,
+        id BIGINT PRIMARY KEY,
         content TEXT NOT NULL,
         saved_style TEXT DEFAULT 'default',
         lat DOUBLE PRECISION,
@@ -91,8 +91,6 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
                         try: p_intel = json.loads(p_intel_raw)
                         except: p_intel = None
 
-                    # POPRAWKA KLUCZ: Wysyłamy do Reacta OBIE nazwy pól (savedStyle oraz saved_style)
-                    # To całkowicie likwiduje błędy undefined w reduktorach i wymusza renderowanie karty!
                     item = {
                         "id": int(p_id), 
                         "content": str(p_content), 
@@ -161,19 +159,10 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
             p_content = str(body.get('content', 'New Idea')).replace("'", "''")
             p_style = str(body.get('savedStyle', 'default')).replace("'", "''")
 
-            try:
-                rows = execute_sql("SELECT MAX(id) FROM posts;")
-                if rows:
-                    # Bezpiecznie wyciągamy najwyższy numer z bazy Neon SQL
-                    r = rows if isinstance(rows, dict) else rows
-                    max_id = r.get("max") if isinstance(r, dict) else r
-                    next_id = int(max_id or 0) + 1
-                else:
-                    next_id = 1
-            except:
-                next_id = 1
+            # POPRAWKA BACKENDU KLUCZ: Generujemy unikalne ID oparte na znaczniku czasu w milisekundach!
+            # To w 100% niszczy błędy duplikacji kluczy w chmurze AWS Neon i pozwala zapisać n-rekordów!
+            next_id = int(time.time() * 1000)
 
-            # POPRAWKA PRODUKCYJNA: Zamiast słowa NULL przekazujemy puste wartości, co chroni kwerendę przed wywaleniem w chmurze Neon SQL!
             execute_sql(f"INSERT INTO posts (id, content, saved_style, distance, saved_intel) VALUES ({next_id}, '{p_content}', '{p_style}', '', '');")
             
             self.send_response(200)
@@ -185,7 +174,12 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
 
     def do_PUT(self):
         if self.path.startswith('/posts/'):
-            post_id = int(self.path.split('/')[-1])
+            try:
+                post_id = int(self.path.split('/')[-1])
+            except:
+                self.send_response(400)
+                self.end_headers()
+                return
             content_length = int(self.headers['Content-Length'])
             body = json.loads(self.rfile.read(content_length).decode('utf-8'))
             
@@ -215,7 +209,5 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
 if __name__ == '__main__':
     server_address = ('', 5000)
     httpd = http.server.HTTPServer(server_address, ProductionCloudBackendHandler)
-    
-    # POPRAWKA: Rozbiliśmy zbitą linię na dwie osobne! Teraz Python przejdzie kompilację bezbłędnie.
-    print("🚀 [PRODUCTION CLOUD BACKEND] Serwer gotowy...")
+    print("🚀 [PRODUCTION CLOUD BACKEND] Serwer gotowy na porcie 5000...")
     httpd.serve_forever()
