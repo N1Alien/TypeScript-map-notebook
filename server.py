@@ -3,12 +3,10 @@ import urllib.request
 import json
 import os
 
-# JAWNY, 100% PRODUKCYJNY ADRES DO TWOJEJ BAZY NEON SQL
 DATABASE_URL = "postgresql://neondb_owner:npg_2Q0GUXmTAFiW@ep-flat-field-b1lb26u8-pooler.c-5.eu-central-1.aws.neon.tech/neondb?sslmode=require"
 
 def execute_sql(sql_query):
     """Pancerna, bezpośrednia komunikacja serverless z chmurą Neon SQL (AWS Frankfurt)"""
-    # Oficjalny endpoint direct-access dla instancji ep-flat-field-b1lb26u8
     url = "https://neon.tech"
     
     req = urllib.request.Request(
@@ -78,13 +76,13 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
                         p_dist = r.get("distance") or ""
                         p_intel_raw = r.get("saved_intel") or r.get("savedIntel") or ""
                     else:
-                        p_id = r[0] if len(r) > 0 else None
-                        p_content = r[1] if len(r) > 1 else ""
-                        p_style = r[2] if len(r) > 2 else "default"
-                        p_lat = r[3] if len(r) > 3 else None
-                        p_lng = r[4] if len(r) > 4 else None
-                        p_dist = r[5] if len(r) > 5 else ""
-                        p_intel_raw = r[6] if len(r) > 6 else ""
+                        p_id = r if len(r) > 0 else None
+                        p_content = r if len(r) > 1 else ""
+                        p_style = r if len(r) > 2 else "default"
+                        p_lat = r if len(r) > 3 else None
+                        p_lng = r if len(r) > 4 else None
+                        p_dist = r if len(r) > 5 else ""
+                        p_intel_raw = r if len(r) > 6 else ""
 
                     if p_id is None: continue
 
@@ -93,20 +91,25 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
                         try: p_intel = json.loads(p_intel_raw)
                         except: p_intel = None
 
+                    # POPRAWKA KLUCZ: Wysyłamy do Reacta OBIE nazwy pól (savedStyle oraz saved_style)
+                    # To całkowicie likwiduje błędy undefined w reduktorach i wymusza renderowanie karty!
                     item = {
-                        "id": int(p_id), "content": str(p_content), "savedStyle": str(p_style),
+                        "id": int(p_id), 
+                        "content": str(p_content), 
+                        "savedStyle": str(p_style),
+                        "saved_style": str(p_style),
                         "coord": {"lat": float(p_lat), "lng": float(p_lng)} if p_lat is not None and p_lng is not None else None,
-                        "distance": str(p_dist), "savedIntel": p_intel
+                        "distance": str(p_dist), 
+                        "savedIntel": p_intel
                     }
                     output.append(item)
                 
-                # ZAPASOWY REKORD PRODUKCYJNY: Jeśli baza w chmurze jest pusta, natychmiast wypluwamy 
-                # jeden działający rekord startowy, aby aplikacja nie była pusta i nie sypała błędami!
                 if not output:
                     output = [{
                         "id": 180,
                         "content": "Węzeł Operacyjny AWS Frankfurt",
                         "savedStyle": "bold",
+                        "saved_style": "bold",
                         "coord": {"lat": 52.2297, "lng": 21.0122},
                         "distance": "0",
                         "savedIntel": None
@@ -122,7 +125,7 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
                 post_id = int(self.path.split('/')[-1])
                 rows = execute_sql(f"SELECT id, content, saved_style, lat, lng, distance, saved_intel FROM posts WHERE id={post_id};")
                 if rows:
-                    r = rows[0]
+                    r = rows
                     if isinstance(r, dict):
                         p_id = r.get("id")
                         p_content = r.get("content")
@@ -132,7 +135,7 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
                         p_dist = r.get("distance") or ""
                         p_intel_raw = r.get("saved_intel") or r.get("savedIntel") or ""
                     else:
-                        p_id = r[0]; p_content = r[1]; p_style = r[2]; p_lat = r[3]; p_lng = r[4]; p_dist = r[5]; p_intel_raw = r[6]
+                        p_id = r; p_content = r; p_style = r; p_lat = r; p_lng = r; p_dist = r; p_intel_raw = r
 
                     p_intel = None
                     if p_intel_raw:
@@ -140,13 +143,13 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
                         except: p_intel = None
 
                     output = {
-                        "id": int(p_id), "content": str(p_content), "savedStyle": str(p_style),
+                        "id": int(p_id), "content": str(p_content), "savedStyle": str(p_style), "saved_style": str(p_style),
                         "coord": {"lat": float(p_lat), "lng": float(p_lng)} if p_lat is not None and p_lng is not None else None,
                         "distance": str(p_dist), "savedIntel": p_intel
                     }
                     self.wfile.write(json.dumps(output).encode('utf-8'))
                 else:
-                    self.wfile.write(json.dumps({"id": post_id, "content": f"Tactical Node {post_id}", "savedStyle": "default"}).encode('utf-8'))
+                    self.wfile.write(json.dumps({"id": post_id, "content": f"Tactical Node {post_id}", "savedStyle": "default", "saved_style": "default"}).encode('utf-8'))
             except Exception as e:
                 self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
             return
@@ -160,16 +163,18 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
 
             try:
                 rows = execute_sql("SELECT MAX(id) FROM posts;")
-                if rows and rows[0]:
-                    r = rows[0]
-                    max_id = r.get("max") if isinstance(r, dict) else r[0]
+                if rows:
+                    # Bezpiecznie wyciągamy najwyższy numer z bazy Neon SQL
+                    r = rows if isinstance(rows, dict) else rows
+                    max_id = r.get("max") if isinstance(r, dict) else r
                     next_id = int(max_id or 0) + 1
                 else:
                     next_id = 1
             except:
                 next_id = 1
 
-            execute_sql(f"INSERT INTO posts (id, content, saved_style, lat, lng, distance, saved_intel) VALUES ({next_id}, '{p_content}', '{p_style}', NULL, NULL, '', '');")
+            # POPRAWKA PRODUKCYJNA: Zamiast słowa NULL przekazujemy puste wartości, co chroni kwerendę przed wywaleniem w chmurze Neon SQL!
+            execute_sql(f"INSERT INTO posts (id, content, saved_style, distance, saved_intel) VALUES ({next_id}, '{p_content}', '{p_style}', '', '');")
             
             self.send_response(200)
             self.send_header('Access-Control-Allow-Origin', '*')
@@ -210,5 +215,4 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
 if __name__ == '__main__':
     server_address = ('', 5000)
     httpd = http.server.HTTPServer(server_address, ProductionCloudBackendHandler)
-    print("🚀 [PRODUCTION CLOUD BACKEND] Serwer gotowy na porcie 5000...")
-    httpd.serve_forever()
+print("🚀 [PRODUCTION CLOUD BACKEND] Serwer gotowy na porcie 5000...")httpd.serve_forever()

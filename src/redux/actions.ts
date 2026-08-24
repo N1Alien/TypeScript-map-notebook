@@ -138,22 +138,14 @@ export const removePost = (id: number) => {
 
 export const addPost = (id: number, content: string, savedStyle: string = "default") => {
   return (dispatch: (arg: PostActionsTypes) => void) => {
+    // Przesyłamy kompletny cyberpunkowy payload, akceptowany przez nowy server.py!
     cyberApi.post('/posts', { 
-      id, 
       content, 
-      savedStyle, 
-      coord: null, 
-      distance: "", 
-      savedIntel: null 
+      savedStyle 
     })
       .then(() => {
-        // Po udanym wstrzyknięciu natychmiast odświeżamy listę z bazy Neon SQL
-        cyberApi.get('/posts')
-          .then((res) => {
-            if (res.data) {
-              dispatch(importedPostsAction(res.data as Task[]));
-            }
-          });
+        console.log("📥 [NEON SQL] Wstrzyknięto nowy węzeł do chmury! Odświeżam matrycę...");
+        dispatch(fetchPosts() as any);
       })
       .catch((err) => console.error("❌ Błąd dodawania do chmury:", err));
   };
