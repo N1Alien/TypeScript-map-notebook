@@ -1,7 +1,6 @@
-FROM python:3.10-slim
+# ZMIANA: Przełączamy na wersję 3.11-slim, aby bezpowrotnie zniszczyć stary cache Rendera!
+FROM python:3.11-slim
 WORKDIR /app
-# Kopiujemy skrypt serwera
 COPY server.py .
 EXPOSE 5000
-# Odpalamy czysty skrypt Pythona
 CMD ["python", "server.py"]
