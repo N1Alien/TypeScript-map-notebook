@@ -217,5 +217,5 @@ if __name__ == '__main__':
     httpd = http.server.HTTPServer(server_address, ProductionCloudBackendHandler)
     
     # POPRAWKA: Rozbiliśmy zbitą linię na dwie osobne! Teraz Python przejdzie kompilację bezbłędnie.
-    print("🚀 [PRODUCTION CLOUD BACKEND] Serwer gotowy na porcie 5000...")
+    print("🚀 [PRODUCTION CLOUD BACKEND] Serwer gotowy...")
     httpd.serve_forever()
