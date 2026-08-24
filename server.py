@@ -215,4 +215,7 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
 if __name__ == '__main__':
     server_address = ('', 5000)
     httpd = http.server.HTTPServer(server_address, ProductionCloudBackendHandler)
-print("🚀 [PRODUCTION CLOUD BACKEND] Serwer gotowy na porcie 5000...")httpd.serve_forever()
+    
+    # POPRAWKA: Rozbiliśmy zbitą linię na dwie osobne! Teraz Python przejdzie kompilację bezbłędnie.
+    print("🚀 [PRODUCTION CLOUD BACKEND] Serwer gotowy na porcie 5000...")
+    httpd.serve_forever()
