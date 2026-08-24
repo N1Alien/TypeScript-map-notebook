@@ -224,3 +224,43 @@ class ProductionCloudBackendHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps({"status": "success", "id": next_id, "db_response": insert_res}).encode('utf-8'))
             return
+
+    def do_PUT(self):
+        if self.path.startswith('/posts/'):
+            post_id = int(self.path.split('/')[-1])
+            content_length = int(self.headers['Content-Length'])
+            body = json.loads(self.rfile.read(content_length).decode('utf-8'))
+            p_content = str(body.get('content', 'Updated')).replace("'", "''")
+            p_style = str(body.get('savedStyle', 'default')).replace("'", "''")
+            p_lat = "NULL"
+            p_lng = "NULL"
+            if body.get('coord') and body['coord'].get('lat') is not None:
+                p_lat = str(float(body['coord']['lat']))
+                p_lng = str(float(body['coord']['lng']))
+            p_dist = str(body.get('distance', '')).replace("'", "''")
+            p_intel = ""
+            if body.get('savedIntel'):
+                p_intel = json.dumps(body.get('savedIntel')).replace("'", "''")
+            sql_clean = f"UPDATE posts SET content='{p_content}', saved_style='{p_style}', lat={p_lat}, lng={p_lng}, distance='{p_dist}', saved_intel='{p_intel}' WHERE id={post_id};"
+            update_res = execute_sql(sql_clean)
+            self.send_response(200)
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({"status": "updated", "db_response": update_res}).encode('utf-8'))
+            return
+
+    def do_DELETE(self):
+        if self.path.startswith('/posts/'):
+            post_id = int(self.path.split('/')[-1])
+            execute_sql(f"DELETE FROM posts WHERE id={post_id};")
+            self.send_response(200)
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            return
+
+if __name__ == '__main__':
+    server_address = ('', 5000)
+    httpd = http.server.HTTPServer(server_address, ProductionCloudBackendHandler)
+    print("🚀 [PRODUCTION CLOUD BACKEND] Serwer debugowania gotowy...")
+    httpd.serve_forever()
