@@ -107,18 +107,26 @@ export const resetIntelAction = (): PostActionsTypes => ({
   type: RESET_INTEL,
 });
 
-// ASYNCHRONICZNE AKCJE THUNK WYKORZYSTUJĄCE ODREDOWANĄ INSTANCJĘ CYBER_API
+// Znajdź i podmień funkcję fetchPosts na tę wersję:
 export const fetchPosts = () => {
   return (dispatch: (arg: PostActionsTypes) => void) => {
+    // Uderzamy bezpośrednio przez sprawdzoną instancję cyberApi
     cyberApi.get('/posts')
       .then((res) => {
         if (res.data) {
-          dispatch(importedPostsAction(res.data as Task[]));
+          // POPRAWKA KLUCZ: Jeśli dane z chmury przychodzą jako czysta tablica [],
+          // upewniamy się, że przesyłamy ją bezpośrednio do reduktora jako poprawny payload.
+          // Dodatkowo zabezpieczamy strukturę na wypadek, gdyby obiekt był zagnieżdżony.
+          const postsArray = Array.isArray(res.data) ? res.data : (res.data.payload || []);
+          
+          console.log("🍏 [RED_DECK] Pomyślnie wstrzykuję tablicę do stanu Redux:", postsArray);
+          dispatch(importedPostsAction(postsArray as Task[]));
         }
       })
       .catch((err) => console.error("❌ Błąd pobierania postów z chmury Neon:", err));
   };
 };
+
 
 export const removePost = (id: number) => {
   return (dispatch: (arg: PostActionsTypes) => void) => {
